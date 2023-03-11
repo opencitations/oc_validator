@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "oc-validator"
+version = "0.1.0"
+description = ""
+authors = ["eliarizzetto <elia.rizzetto@gmail.com>"]
+readme = "README.md"
+packages = [{include = "oc_validator"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+oc-idmanager = "^0.2.6"
+pyyaml = "^6.0"
+roman = "^4.0"
+
+
+[tool.poetry.group.dev.dependencies]
+jsonschema = "^4.17.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
