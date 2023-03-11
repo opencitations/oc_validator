@@ -1,0 +1,18 @@
+# PyCharm project setting
+.idea
+# VSCode project setting
+.vscode/
+
+#build package
+dist/
+
+#virtual environment
+myenv
+
+#tests and output directories for development
+prove.py
+output
+validation_output
+tmp
+
+

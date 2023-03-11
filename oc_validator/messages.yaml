@@ -1,0 +1,103 @@
+# This file contains the messages explaining an error to the user.
+
+m1: >
+  The value in this field is not expressed in compliance with the syntax of OpenCitations CITS-CSV.
+  The content of 'citing_id' and 'cited_id' must be either a single ID or a sequence of IDs, each separated
+  by one single space character (Unicode Character “SPACE”, U+0020). Each ID must not have spaces within 
+  itself, and must be of the following form: <ID abbreviation> + “:” + <ID value>.
+
+m2: >
+  The value in this field is not expressed in compliance with the syntax of OpenCitations CITS-CSV. 
+  Each identifier in 'citing_id' and/or 'cited_id' must have the following form: ID abbreviation + “:” + ID value.
+  No spaces are admitted within the ID. Example: doi:10.48550/arXiv.2206.03971. The accepted prefixes 
+  (ID abbreviations) are the following: 'doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia'.
+
+m3: >
+  The value in this field is not expressed in compliance with the syntax of OpenCitations CITS-CSV. 
+  The content of 'citing_publication_date' and/or 'cited_publication_date' must be of one of the following 
+  forms (according to standard ISO 86014): YYYY-MM-DD, YYYY-MM, YYYY. If year is required, month and day 
+  are optional. If the day is expressed, the day must also be expressed. Examples: '2000'; '2000-04'; '2000-04-27'.
+
+m4: >
+  It seems that a self-citation is being represented: the bibliographic resource appears to be citing itself. 
+  Are you sure?
+
+m5: >
+  The same citation is being represented in more than one row. Please check all the rows involved in the representation
+   of this citation and unify them or remove the extra ones.
+
+m6: >
+  The same ID is reported more than once within the same cell. Please remove the extra occurrence(s).
+
+m7: >
+  A value for both 'citing_id' and 'cited_id' MUST always be specified.
+
+m8: >
+  The whole title of the publication is uppercase. Are you sure? Please double-check the actual title of the 
+  publication.
+
+m9: >
+  The value representing the responsible agent entity is not well-formed. The entity for a responsible agent is
+  represented by the name of the person/organization, followed by a single whitespace and one or 
+  more associated identifiers, always enclosed in square brackets (among the following schemes: viaf, ror, wikidata, 
+  orcid). Common mistakes: more than comma; two or more consecutive whitespace characters; unsupported ID schemes;
+  whitespace character separating the prefix and the ID value.
+
+m10: >
+  There has been found a string that seems to be an ID, but it is not enclosed in square brackets. Are you sure?
+
+m11: >
+  The same bibliographic resource is being represented in more than one row. Please check all the rows involved in 
+  the representation of this publication and unify them or remove the extra ones.
+
+m12: >
+  The value representing the bibliographic resource entity is not well-formed. The entity for a bibliographic resource
+  is represented by the name of the publication, followed by a single whitespace and one or 
+  more associated identifiers, always enclosed in square brackets (among the following schemes: doi, wikipedia, 
+  wikidata, pmid, pmcid, url, issn and isbn). Common mistakes: two or more consecutive whitespace characters; 
+  unsupported ID schemes; whitespace character separating the prefix and the ID value.
+
+m13: >
+  The value for 'issue'/'volume' is not well-formed. Likely cause of error might be the presence of (an) extra 
+  whitespace character(s).
+
+m14: >
+  The value of 'page' is not well-formed. There must always be a starting page, followed by an hyphen, followed by
+  the end page. If the resource is all on the same page, the page numbers before and after the hyphen are the same.
+
+m15: >
+  There has been found a string that seems to be an ID, but it is not enclosed in square brackets. Are you sure?
+
+m16: >
+  The value of 'type' is not well-formed. The accepted values are exactly the following: 'book', 'book chapter', 'book part', 
+  'book section', 'book series', 'book set', 'book track', 'component', 'dataset', 'data file', 'dissertation', 
+  'edited book', 'journal', 'journal article', 'journal issue', 'journal volume', 'monograph', 'other', 
+  'peer review', 'posted content', 'web content', 'proceedings', 'proceedings article', 'proceedings series',
+  'reference book', 'reference entry', 'report', 'report series', 'series' 'standard', 'standard series'. No spaces
+  are admitted before or after the value.
+
+m17: >
+  A value of a required field is missing, or the wrong value is specified. Please refer to the table at
+  https://github.com/opencitations/metadata/blob/546e9490d264d481d0ad3451c9533fd2e7b0f101/documentation/csv_documentation.pdf
+
+m18: >
+  The page interval specified in 'page' seems to be impossible: the start page appears to be greater than the end page.
+
+m19: >
+  The ID in 'id'/'venue' does not conform to the syntax (pattern) of its identifier scheme. Please refer to the relevant 
+  documentation by the specific identifier provider.
+
+m20: >
+  The ID in 'id'/'venue' is not registered as a persistent identifier for any bibliographic resource, i.e. it does not exist.
+
+m21: >
+  The ID in 'author'/'editor'/'publisher' does not conform to the syntax (pattern) of its identifier scheme. Please 
+  refer to the relevant documentation by the specific identifier provider.
+
+m22: >
+  The ID in 'author'/'editor'/'publisher' is not registered as a persistent identifier for any bibliographic resource, 
+  i.e. it does not exist.
+
+m23: >
+  According to the OpenCitations Data Model, the type specified for the bibliographic entity is not compatible with 
+  the ID(s) associated with it.
