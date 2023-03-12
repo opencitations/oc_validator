@@ -2,7 +2,7 @@
 name = "oc-validator"
 version = "0.1.0"
 description = "A software to validate CSV documents storing citation data and bibliographic metadata according to the OpenCitations Data Model."
-authors = ["Silvio Peroni <silvio.peroni@unibo.it>","Elia Rizzetto <elia.rizzetto@gmail.com>"]
+authors = ["Elia Rizzetto <elia.rizzetto@gmail.com>", "Silvio Peroni <silvio.peroni@unibo.it>"]
 readme = "README.md"
 packages = [{include = "oc_validator"}]
 
