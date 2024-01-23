@@ -51,11 +51,11 @@ class Validator:
     def process_selector(self, data: list):
         process_type = None
         try:
-            if all(list(row.keys()) == ["id", "title", "author", "pub_date", "venue", "volume", "issue", "page", "type",
-                                        "publisher", "editor"] for row in data):
+            if all(set(row.keys()) == {"id", "title", "author", "pub_date", "venue", "volume", "issue", "page", "type",
+                                        "publisher", "editor"} for row in data):
                 process_type = 'meta_csv'
                 return process_type
-            elif all(list(row.keys()) == ['citing_id', 'citing_publication_date', 'cited_id', 'cited_publication_date']
+            elif all(set(row.keys()) == {'citing_id', 'citing_publication_date', 'cited_id', 'cited_publication_date'}
                      for row in
                      data):
                 process_type = 'cits_csv'
