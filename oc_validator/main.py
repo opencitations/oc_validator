@@ -293,7 +293,7 @@ class Validator:
 
                         else:
                             ids = [m.group() for m in
-                                   finditer(r'((?:doi|issn|isbn|url|wikidata|wikipedia):\S+)(?=\s|\])', value)]
+                                   finditer(r'((?:doi|issn|isbn|url|wikidata|wikipedia|openalex):\S+)(?=\s|\])', value)]
 
                             for id in ids:
 

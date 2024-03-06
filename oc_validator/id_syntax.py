@@ -12,7 +12,7 @@
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 # SOFTWARE.
 
-from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia
+from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, openalex
 
 class IdSyntax:
 
@@ -60,4 +60,7 @@ class IdSyntax:
             return vldt.syntax_ok(id)
         if oc_prefix == 'wikipedia:':
             vldt = wikipedia.WikipediaManager()
+            return vldt.syntax_ok(id)
+        if oc_prefix == 'openalex:':
+            vldt = openalex.OpenAlexManager()
             return vldt.syntax_ok(id)

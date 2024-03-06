@@ -29,7 +29,7 @@ class Wellformedness:
         :param id_element: str
         :return: bool
         """
-        id_pattern = r'^(doi|issn|isbn|pmid|pmcid|url|wikidata|wikipedia):\S+$'
+        id_pattern = r'^(doi|issn|isbn|pmid|pmcid|url|wikidata|wikipedia|openalex):\S+$'
         if match(id_pattern, id_element):
             return True
         else:
@@ -105,7 +105,7 @@ class Wellformedness:
         """
         outside_brackets_venue = r'(?:[^\s\[\]]+(?:\s[^\s\[\]]+)*)'
         # pmcids are not valid identifiers for 'venues'!
-        inside_brackets_venue = r'\[(doi|pmid|issn|isbn|url|wikidata|wikipedia):\S+(?:\s(doi|pmid|issn|isbn|url|wikidata|wikipedia):\S+)*\]'
+        inside_brackets_venue = r'\[(doi|pmid|issn|isbn|url|wikidata|wikipedia|openalex):\S+(?:\s(doi|pmid|issn|isbn|url|wikidata|wikipedia|openalex):\S+)*\]'
         venue_pattern = f'^(?:({outside_brackets_venue}\\s{inside_brackets_venue})|({outside_brackets_venue}\\s?)|({inside_brackets_venue}))$'
 
         if match(venue_pattern, venue_value):
@@ -121,7 +121,7 @@ class Wellformedness:
         :return:
         bool, True if a match is found (the string is likely NOT well-formed), False if NO match is found.
         """
-        if search(r'(doi|pmid|issn|isbn|url|wikidata|wikipedia):', sub(r'\[.*\]', '', venue_value)):
+        if search(r'(doi|pmid|issn|isbn|url|wikidata|wikipedia|openalex):', sub(r'\[.*\]', '', venue_value)):
             return True
         else:
             return False

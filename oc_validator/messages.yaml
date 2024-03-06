@@ -10,7 +10,8 @@ m2: >
   The value in this field is not expressed in compliance with the syntax of OpenCitations CITS-CSV. 
   Each identifier in 'citing_id' and/or 'cited_id' must have the following form: ID abbreviation + “:” + ID value.
   No spaces are admitted within the ID. Example: doi:10.48550/arXiv.2206.03971. The accepted prefixes 
-  (ID abbreviations) are the following: 'doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia'.
+  (ID abbreviations) are the following: 'doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 
+  'openalex'.
 
 m3: >
   The value in this field is not expressed in compliance with the syntax of OpenCitations CITS-CSV. 
@@ -54,7 +55,7 @@ m12: >
   The value representing the bibliographic resource entity is not well-formed. The entity for a bibliographic resource
   is represented by the name of the publication, followed by a single whitespace and one or 
   more associated identifiers, always enclosed in square brackets (among the following schemes: doi, wikipedia, 
-  wikidata, pmid, pmcid, url, issn and isbn). Common mistakes: two or more consecutive whitespace characters; 
+  wikidata, pmid, pmcid, url, issn, isbn and openalex). Common mistakes: two or more consecutive whitespace characters; 
   unsupported ID schemes; whitespace character separating the prefix and the ID value.
 
 m13: >
