@@ -19,8 +19,9 @@ from oc_validator.helper import Helper
 
 class Wellformedness:
     def __init__(self):
-        self.descr = 'This class groups the function for validating the well-formedness of the document.'  # todo: remove descr?
         self.helper = Helper()
+        self.br_id_schemes = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex']
+        self.ra_id_schemes = ['crossref', 'orcid', 'viaf', 'wikidata', 'ror']
 
     def wellformedness_br_id(self, id_element):
         """
@@ -29,7 +30,7 @@ class Wellformedness:
         :param id_element: str
         :return: bool
         """
-        id_pattern = r'^(doi|issn|isbn|pmid|pmcid|url|wikidata|wikipedia|openalex):\S+$'
+        id_pattern = fr'^({"|".join(self.br_id_schemes)}):\S+$'
         if match(id_pattern, id_element):
             return True
         else:
@@ -45,8 +46,8 @@ class Wellformedness:
         #  todo: create stricter regex for not allowing characters that are likely to be illegal in a person's name/surname
         #   (e.g. digits, apostrophe, underscore, full-stop, etc.)
         outside_brackets = r'(?:[^\s,;\[\]]+(?:\s[^\s,;\[\]]+)*),?(?:\s[^\s,;\[\]]+)*'
-        inside_brackets = r'\[(crossref|orcid|viaf|wikidata|ror):\S+(?:\s(crossref|orcid|viaf|wikidata|ror):\S+)*\]'
-        ra_item_pattern = f'^(?:({outside_brackets}\\s{inside_brackets})|({outside_brackets}\\s?)|({inside_brackets}))$'
+        inside_brackets = fr'\[({"|".join(self.ra_id_schemes)}):\S+(?:\s({"|".join(self.ra_id_schemes)}):\S+)*\]'
+        ra_item_pattern = fr'^(?:({outside_brackets}\s{inside_brackets})|({outside_brackets}\s?)|({inside_brackets}))$'
 
         if match(ra_item_pattern, ra_item):
             return True
@@ -61,8 +62,8 @@ class Wellformedness:
         :return: bool
         """
         outside_brackets_pub = r'(?:[^\s\[\]]+(?:\s[^\s\[\]]+)*)'
-        inside_brackets = r'\[(crossref|orcid|viaf|wikidata|ror):\S+(?:\s(crossref|orcid|viaf|wikidata|ror):\S+)*\]'
-        ra_item_pattern = f'^(?:({outside_brackets_pub}\\s{inside_brackets})|({outside_brackets_pub}\\s?)|({inside_brackets}))$'
+        inside_brackets = fr'\[({"|".join(self.ra_id_schemes)}):\S+(?:\s({"|".join(self.ra_id_schemes)}):\S+)*\]'
+        ra_item_pattern = fr'^(?:({outside_brackets_pub}\s{inside_brackets})|({outside_brackets_pub}\s?)|({inside_brackets}))$'
 
         if match(ra_item_pattern, ra_item):
             return True
@@ -78,7 +79,7 @@ class Wellformedness:
         :return:
         bool, True if a match is found (the string is likely NOT well-formed), False if NO match is found.
         """
-        if search(r'(crossref|orcid|viaf|wikidata|ror):', sub(r'\[.*\]', '', ra_item)):
+        if search(fr'({"|".join(self.ra_id_schemes)}):', sub(r'\[.*\]', '', ra_item)):
             return True
         else:
             return False
@@ -105,8 +106,8 @@ class Wellformedness:
         """
         outside_brackets_venue = r'(?:[^\s\[\]]+(?:\s[^\s\[\]]+)*)'
         # pmcids are not valid identifiers for 'venues'!
-        inside_brackets_venue = r'\[(doi|pmid|issn|isbn|url|wikidata|wikipedia|openalex):\S+(?:\s(doi|pmid|issn|isbn|url|wikidata|wikipedia|openalex):\S+)*\]'
-        venue_pattern = f'^(?:({outside_brackets_venue}\\s{inside_brackets_venue})|({outside_brackets_venue}\\s?)|({inside_brackets_venue}))$'
+        inside_brackets_venue = fr'\[({"|".join(self.br_id_schemes)}):\S+(?:\s({"|".join(self.br_id_schemes)}):\S+)*\]'
+        venue_pattern = fr'^(?:({outside_brackets_venue}\s{inside_brackets_venue})|({outside_brackets_venue}\s?)|({inside_brackets_venue}))$'
 
         if match(venue_pattern, venue_value):
             return True
@@ -121,7 +122,7 @@ class Wellformedness:
         :return:
         bool, True if a match is found (the string is likely NOT well-formed), False if NO match is found.
         """
-        if search(r'(doi|pmid|issn|isbn|url|wikidata|wikipedia|openalex):', sub(r'\[.*\]', '', venue_value)):
+        if search(fr'({"|".join(self.br_id_schemes)}):', sub(r'\[.*\]', '', venue_value)):
             return True
         else:
             return False
