@@ -15,6 +15,7 @@
 from re import match, search, sub
 from roman import fromRoman, InvalidRomanNumeralError
 from oc_validator.helper import Helper
+from json import load
 
 
 class Wellformedness:
@@ -22,6 +23,7 @@ class Wellformedness:
         self.helper = Helper()
         self.br_id_schemes = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex']
         self.ra_id_schemes = ['crossref', 'orcid', 'viaf', 'wikidata', 'ror']
+        self.id_type_dict: dict = load(open('oc_validator/id_type_alignment.json', 'r', encoding='utf-8'))
 
     def wellformedness_br_id(self, id_element):
         """
@@ -194,13 +196,8 @@ class Wellformedness:
         :param type_value: str
         :return: bool
         """
-        valid_types = ['book', 'book chapter', 'book part', 'book section', 'book series', 'book set', 'book track',
-                       'component', 'dataset', 'data file', 'dissertation', 'edited book', 'journal', 'journal article',
-                       'journal issue', 'journal volume', 'monograph', 'other', 'peer review', 'posted content',
-                       'web content', 'proceedings', 'proceedings article', 'proceedings series', 'reference book',
-                       'reference entry', 'report', 'report series', 'series' 'standard', 'standard series']
 
-        if type_value in valid_types:
+        if type_value in self.id_type_dict.keys():
             return True
         else:
             return False
