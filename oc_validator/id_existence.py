@@ -12,59 +12,90 @@
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 # SOFTWARE.
 
-from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, openalex
+from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, \
+    openalex
+from SPARQLWrapper import SPARQLWrapper, JSON
+
 
 class IdExistence:
 
     def __init__(self):
-        self.doim= doi.DOIManager()
-        self.isbnm= isbn.ISBNManager()
-        self.issnm= issn.ISSNManager()
-        self.orcidm= orcid.ORCIDManager()
-        self.pmcidm= pmcid.PMCIDManager()
-        self.pmidm= pmid.PMIDManager()
-        self.rorm= ror.RORManager()
-        self.urlm= url.URLManager()
-        self.viafm= viaf.ViafManager()
-        self.wikidatam= wikidata.WikidataManager()
-        self.wikipediam= wikipedia.WikipediaManager()
-        self.openalexm= openalex.OpenAlexManager()
+        self.doi_mngr = doi.DOIManager()
+        self.isbn_mngr = isbn.ISBNManager()
+        self.issn_mngr = issn.ISSNManager()
+        self.orcid_mngr = orcid.ORCIDManager()
+        self.pmcid_mngr = pmcid.PMCIDManager()
+        self.pmid_mngr = pmid.PMIDManager()
+        self.ror_mngr = ror.RORManager()
+        self.url_mngr = url.URLManager()
+        self.viaf_mngr = viaf.ViafManager()
+        self.wikidata_mngr = wikidata.WikidataManager()
+        self.wikipedia_mngr = wikipedia.WikipediaManager()
+        self.openalex_mngr = openalex.OpenAlexManager()
 
-    def check_id_existence(self, id:str):
+    def check_id_existence(self, id: str):
         """
         Checks if a specific identifier is registered in the service it is provided by, by a request to the relative API,
         calling the .exists() method from every IdManager module.
-        :param id: the string of the ID without the prefix
+        :param id: the string of the ID (prefix included)
         :return: bool
         """
 
-        oc_prefix = id[:(id.index(':')+1)]
+        oc_prefix = id[:(id.index(':') + 1)]
 
         if oc_prefix == 'doi:':
-            vldt = self.doim  # you can use removeprefix(oc_prefix) from Python 3.9+
+            vldt = self.doi_mngr  # you can use removeprefix(oc_prefix) from Python 3.9+
         elif oc_prefix == 'isbn:':
-            vldt = self.isbnm
+            vldt = self.isbn_mngr
         elif oc_prefix == 'issn:':
-            vldt = self.issnm
+            vldt = self.issn_mngr
         elif oc_prefix == 'orcid:':
-            vldt = self.orcidm
+            vldt = self.orcid_mngr
         elif oc_prefix == 'pmcid:':
-            vldt = self.pmcidm
+            vldt = self.pmcid_mngr
         elif oc_prefix == 'pmid:':
-            vldt = self.pmidm
+            vldt = self.pmid_mngr
         elif oc_prefix == 'ror:':
-            vldt = self.rorm
+            vldt = self.ror_mngr
         elif oc_prefix == 'url:':
-            vldt = self.urlm
+            vldt = self.url_mngr
         elif oc_prefix == 'viaf:':
-            vldt = self.viafm
+            vldt = self.viaf_mngr
         elif oc_prefix == 'wikidata:':
-            vldt = self.wikidatam
+            vldt = self.wikidata_mngr
         elif oc_prefix == 'wikipedia:':
-            vldt = self.wikipediam
+            vldt = self.wikipedia_mngr
         elif oc_prefix == 'openalex:':
-            vldt = self.openalexm
+            vldt = self.openalex_mngr
         # todo: add Crossref ID for publishers (currently not in id_manager)
         else:
             return False
         return vldt.exists(id.replace(oc_prefix, '', 1))
+
+    def query_meta_triplestore(self, id:str):
+        """
+        Checks if an ID exists by looking it up in the OpenCitations Meta triplestore via a SPARQL query to Meta's endpoint.
+        :param id: the string of the ID (prefix included)
+        :return: bool
+        """
+        oc_prefix = id[:(id.index(':') + 1)]
+        lookup_id = id.replace(oc_prefix, '', 1)
+        datacite_id_scheme = oc_prefix[:-1]  # same as OC prefix but without the ":"
+
+        sparql = SPARQLWrapper("https://opencitations.net/meta/sparql")
+        q = '''
+        PREFIX datacite: <http://purl.org/spar/datacite/>
+        PREFIX literal: <http://www.essepuntato.it/2010/06/literalreification/>
+        ASK {
+            ?identifier literal:hasLiteralValue "%s".
+            ?res datacite:hasIdentifier ?identifier.
+            ?identifier datacite:usesIdentifierScheme datacite:%s.
+        }
+        ''' % (lookup_id, datacite_id_scheme)
+
+        # TODO: find a way to set credentials or access token, if necessary. Take a look at
+        #  SPARQLWrapper.setCredentials()
+        sparql.setQuery(q)
+        sparql.setReturnFormat(JSON)
+        result = sparql.query().convert()
+        return result.get('boolean')
