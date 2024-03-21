@@ -221,7 +221,7 @@ class Wellformedness:
 
             if row['type']:  # ID is missing and 'type' is specified
 
-                if row['type'] in ['book', 'dataset', 'data file', 'dissertation', 'edited book', 'journal',
+                if row['type'] in ['book', 'dataset', 'data file', 'dissertation', 'edited book',
                                    'journal article', 'monograph', 'other', 'peer review', 'posted content',
                                    'web content', 'proceedings article', 'reference book', 'report']:
                     if not row['title']:
