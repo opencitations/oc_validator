@@ -17,7 +17,19 @@ from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ro
 class IdExistence:
 
     def __init__(self):
-        pass
+        self.doim= doi.DOIManager()
+        self.isbnm= isbn.ISBNManager()
+        self.issnm= issn.ISSNManager()
+        self.orcidm= orcid.ORCIDManager()
+        self.pmcidm= pmcid.PMCIDManager()
+        self.pmidm= pmid.PMIDManager()
+        self.rorm= ror.RORManager()
+        self.urlm= url.URLManager()
+        self.viafm= viaf.ViafManager()
+        self.wikidatam= wikidata.WikidataManager()
+        self.wikipediam= wikipedia.WikipediaManager()
+        self.openalexm= openalex.OpenAlexManager()
+
     def check_id_existence(self, id:str):
         """
         Checks if a specific identifier is registered in the service it is provided by, by a request to the relative API,
@@ -29,38 +41,30 @@ class IdExistence:
         oc_prefix = id[:(id.index(':')+1)]
 
         if oc_prefix == 'doi:':
-            vldt = doi.DOIManager() # you can use removeprefix(oc_prefix) from Python 3.9+
-            return vldt.exists(id.replace(oc_prefix, '', 1))  # todo: use id.replace(oc_prefix, '', 1) for Python < v.3.9
-        if oc_prefix == 'isbn:':
-            vldt = isbn.ISBNManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'issn:':
-            vldt = issn.ISSNManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'orcid:':
-            vldt = orcid.ORCIDManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'pmcid:':
-            vldt = pmcid.PMCIDManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'pmid:':
-            vldt = pmid.PMIDManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'ror:':
-            vldt = ror.RORManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'url:':
-            vldt = url.URLManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'viaf:':
-            vldt = viaf.ViafManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'wikidata:':
-            vldt = wikidata.WikidataManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'wikipedia:':
-            vldt = wikipedia.WikipediaManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
-        if oc_prefix == 'openalex:':
-            vldt = openalex.OpenAlexManager()
-            return vldt.exists(id.replace(oc_prefix, '', 1))
+            vldt = self.doim  # you can use removeprefix(oc_prefix) from Python 3.9+
+        elif oc_prefix == 'isbn:':
+            vldt = self.isbnm
+        elif oc_prefix == 'issn:':
+            vldt = self.issnm
+        elif oc_prefix == 'orcid:':
+            vldt = self.orcidm
+        elif oc_prefix == 'pmcid:':
+            vldt = self.pmcidm
+        elif oc_prefix == 'pmid:':
+            vldt = self.pmidm
+        elif oc_prefix == 'ror:':
+            vldt = self.rorm
+        elif oc_prefix == 'url:':
+            vldt = self.urlm
+        elif oc_prefix == 'viaf:':
+            vldt = self.viafm
+        elif oc_prefix == 'wikidata:':
+            vldt = self.wikidatam
+        elif oc_prefix == 'wikipedia:':
+            vldt = self.wikipediam
+        elif oc_prefix == 'openalex:':
+            vldt = self.openalexm
+        # todo: add Crossref ID for publishers (currently not in id_manager)
+        else:
+            return False
+        return vldt.exists(id.replace(oc_prefix, '', 1))
