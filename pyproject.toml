@@ -10,6 +10,7 @@ packages = [{include = "oc_validator"}]
 python = "^3.9"
 pyyaml = "^6.0"
 roman = "^4.0"
+sparqlwrapper = "^2.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
