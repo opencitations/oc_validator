@@ -27,13 +27,13 @@ from argparse import ArgumentParser
 
 
 class Validator:
-    def __init__(self, csv_doc: str, output_dir: str):
+    def __init__(self, csv_doc: str, output_dir: str, use_meta_endpoint=False):
         self.data = self.read_csv(csv_doc)
         self.table_to_process = self.process_selector(self.data)
         self.helper = Helper()
         self.wellformed = Wellformedness()
         self.syntax = IdSyntax()
-        self.existence = IdExistence()
+        self.existence = IdExistence(use_meta_endpoint=use_meta_endpoint)
         self.semantics = Semantics()
         self.messages = full_load(open('oc_validator/messages.yaml', 'r', encoding='utf-8'))
         # self.messages = full_load(open(join(dirname(__file__), 'messages.yaml'), 'r', encoding='utf-8'))
@@ -681,14 +681,16 @@ if __name__ == '__main__':
                         help='The path to the CSV document to validate.', type=str)
     parser.add_argument('-o', '--output', dest='output_dir', required=True,
                         help='The path to the directory where to store the output JSON file.', type=str)
+    parser.add_argument('-m', '--use-meta', dest='use_meta_endpoint', action='store_true',
+                        help='Use the OC Meta endpoint to check if an ID exists.', required=False)
     args = parser.parse_args()
-    v = Validator(args.input_csv, args.output_dir)
+    v = Validator(args.input_csv, args.output_dir, args.use_meta_endpoint)
     v.validate()
 
 # to instantiate the class, write:
-# v = Validator('path/to/csv/file', 'output/dir/path')
+# v = Validator('path/to/csv/file', 'output/dir/path') # optionally set use_meta_endpoint to True
 # v.validate() --> validates, returns the output, and saves files
 
 
 # FROM THE COMMAND LINE:
-# python -m oc_validator.main -i <input csv file path> -o <output dir path>
+# python -m oc_validator.main -i <input csv file path> -o <output dir path> [-m]

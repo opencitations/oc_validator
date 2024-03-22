@@ -19,7 +19,12 @@ from SPARQLWrapper import SPARQLWrapper, JSON
 
 class IdExistence:
 
-    def __init__(self):
+    def __init__(self, use_meta_endpoint=True):
+        """
+        Checks whether an external ID exists or not, by verifying it is registered as such in the appropriate service.
+        :param use_meta_endpoint: indicates whether or not to look for an ID in OC Meta triplestore via SPARQL
+        endpoint.
+        """
         self.doi_mngr = doi.DOIManager()
         self.isbn_mngr = isbn.ISBNManager()
         self.issn_mngr = issn.ISSNManager()
@@ -32,15 +37,30 @@ class IdExistence:
         self.wikidata_mngr = wikidata.WikidataManager()
         self.wikipedia_mngr = wikipedia.WikipediaManager()
         self.openalex_mngr = openalex.OpenAlexManager()
+        self.use_meta_endpoint = use_meta_endpoint
 
-    def check_id_existence(self, id: str):
+    def check_id_existence(self, id:str):
+        """
+        Queries a database to look for the ID passed as argument (with its prefix included). If
+        IdExistence.use_meta_endpoint is set to False, it queries only external services and directly returns
+        the output of ID.Existence.query_external_service(). If IdExistence.use_meta_endpoint is set to True, it first
+        queries OC Meta's SPARQL endpoint (calling IdExistence.query_meta_triplestore()): if the ID is already
+        present in Meta, return True; else, queries external service and return the result of this last query.
+        :param id: the string of the ID (prefix included)
+        :return: bool
+        """
+        if self.use_meta_endpoint:
+            meta_response = self.query_meta_triplestore(id)
+            return meta_response if meta_response is True else self.query_external_service(id)
+        return self.query_external_service(id)
+
+    def query_external_service(self, id: str):
         """
         Checks if a specific identifier is registered in the service it is provided by, by a request to the relative API,
         calling the .exists() method from every IdManager module.
         :param id: the string of the ID (prefix included)
         :return: bool
         """
-
         oc_prefix = id[:(id.index(':') + 1)]
 
         if oc_prefix == 'doi:':
@@ -97,5 +117,5 @@ class IdExistence:
         #  SPARQLWrapper.setCredentials()
         sparql.setQuery(q)
         sparql.setReturnFormat(JSON)
-        result = sparql.query().convert()
+        result: dict = sparql.query().convert()
         return result.get('boolean')
