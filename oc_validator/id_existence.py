@@ -38,6 +38,8 @@ class IdExistence:
         self.wikipedia_mngr = wikipedia.WikipediaManager()
         self.openalex_mngr = openalex.OpenAlexManager()
         self.use_meta_endpoint = use_meta_endpoint
+        self.sparql = SPARQLWrapper("https://opencitations.net/meta/sparql")
+        # self.sparql.addCustomHttpHeader('Authorization', 'oc_validator_token') # todo: change value with real access token
 
     def check_id_existence(self, id:str):
         """
@@ -102,7 +104,7 @@ class IdExistence:
         lookup_id = id.replace(oc_prefix, '', 1)
         datacite_id_scheme = oc_prefix[:-1]  # same as OC prefix but without the ":"
 
-        sparql = SPARQLWrapper("https://opencitations.net/meta/sparql")
+        sparql = self.sparql
         q = '''
         PREFIX datacite: <http://purl.org/spar/datacite/>
         PREFIX literal: <http://www.essepuntato.it/2010/06/literalreification/>
@@ -113,8 +115,6 @@ class IdExistence:
         }
         ''' % (lookup_id, datacite_id_scheme)
 
-        # TODO: find a way to set credentials or access token, if necessary. Take a look at
-        #  SPARQLWrapper.setCredentials()
         sparql.setQuery(q)
         sparql.setReturnFormat(JSON)
         result: dict = sparql.query().convert()
