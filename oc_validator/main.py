@@ -431,52 +431,66 @@ class Validator:
 
                 if field == 'publisher':
                     if value:
-                        if self.wellformed.orphan_ra_id(value):
-                            message = messages['m10']
-                            table = {row_idx: {field: [0]}}
-                            error_final_report.append(
-                                self.helper.create_error_dict(validation_level='csv_wellformedness',
-                                                              error_type='warning',
-                                                              message=message,
-                                                              error_label='orphan_ra_id',
-                                                              located_in='item',
-                                                              table=table,
-                                                              valid=True))
+                        items = value.split('; ')
+                        for item_idx, item in enumerate(items):
+                            if self.wellformed.orphan_ra_id(value):
+                                message = messages['m10']
+                                table = {row_idx: {field: [item_idx]}}
+                                error_final_report.append(
+                                    self.helper.create_error_dict(validation_level='csv_wellformedness',
+                                                                  error_type='warning',
+                                                                  message=message,
+                                                                  error_label='orphan_ra_id',
+                                                                  located_in='item',
+                                                                  table=table,
+                                                                  valid=True))
 
-                        if not self.wellformed.wellformedness_publisher_item(value):
-                            message = messages['m9']
-                            table = {row_idx: {field: [0]}}
-                            error_final_report.append(
-                                self.helper.create_error_dict(validation_level='csv_wellformedness',
-                                                              error_type='error',
-                                                              message=message,
-                                                              error_label='publisher_format',
-                                                              located_in='item',
-                                                              table=table))
+                            if not self.wellformed.wellformedness_publisher_item(value):
+                                message = messages['m9']
+                                table = {row_idx: {field: [item_idx]}}
+                                error_final_report.append(
+                                    self.helper.create_error_dict(validation_level='csv_wellformedness',
+                                                                  error_type='error',
+                                                                  message=message,
+                                                                  error_label='publisher_format',
+                                                                  located_in='item',
+                                                                  table=table))
 
-                        else:
-                            ids = [m.group() for m in
-                                   finditer(r'((?:crossref|orcid|viaf|wikidata|ror):\S+)(?=\s|\])', value)]
+                            else:
+                                ids = [m.group() for m in
+                                       finditer(r'((?:crossref|orcid|viaf|wikidata|ror):\S+)(?=\s|\])', value)]
 
-                            for id in ids:
+                                for id in ids:
 
-                                #  2nd validation level: EXTERNAL SYNTAX OF ID (RESPONSIBLE AGENT)
-                                if not self.syntax.check_id_syntax(id):
-                                    message = messages['m21']
-                                    table = {row_idx: {field: [0]}}
-                                    error_final_report.append(
-                                        self.helper.create_error_dict(validation_level='external_syntax',
-                                                                      error_type='error',
-                                                                      message=message,
-                                                                      error_label='ra_id_syntax',
-                                                                      located_in='item',
-                                                                      table=table))
-                                #  3rd validation level: EXISTENCE OF ID (RESPONSIBLE AGENT)
-                                else:
-                                    message = messages['m22']
-                                    table = {row_idx: {field: [0]}}
-                                    if id not in self.visited_ids:
-                                        if not self.existence.check_id_existence(id):
+                                    #  2nd validation level: EXTERNAL SYNTAX OF ID (RESPONSIBLE AGENT)
+                                    if not self.syntax.check_id_syntax(id):
+                                        message = messages['m21']
+                                        table = {row_idx: {field: [item_idx]}}
+                                        error_final_report.append(
+                                            self.helper.create_error_dict(validation_level='external_syntax',
+                                                                          error_type='error',
+                                                                          message=message,
+                                                                          error_label='ra_id_syntax',
+                                                                          located_in='item',
+                                                                          table=table))
+                                    #  3rd validation level: EXISTENCE OF ID (RESPONSIBLE AGENT)
+                                    else:
+                                        message = messages['m22']
+                                        table = {row_idx: {field: [item_idx]}}
+                                        if id not in self.visited_ids:
+                                            if not self.existence.check_id_existence(id):
+                                                error_final_report.append(
+                                                    self.helper.create_error_dict(validation_level='existence',
+                                                                                  error_type='warning',
+                                                                                  message=message,
+                                                                                  error_label='ra_id_existence',
+                                                                                  located_in='item',
+                                                                                  table=table,
+                                                                                  valid=True))
+                                                self.visited_ids[id] = False
+                                            else:
+                                                self.visited_ids[id] = True
+                                        elif self.visited_ids[id] is False:
                                             error_final_report.append(
                                                 self.helper.create_error_dict(validation_level='existence',
                                                                               error_type='warning',
@@ -485,18 +499,6 @@ class Validator:
                                                                               located_in='item',
                                                                               table=table,
                                                                               valid=True))
-                                            self.visited_ids[id] = False
-                                        else:
-                                            self.visited_ids[id] = True
-                                    elif self.visited_ids[id] is False:
-                                        error_final_report.append(
-                                            self.helper.create_error_dict(validation_level='existence',
-                                                                          error_type='warning',
-                                                                          message=message,
-                                                                          error_label='ra_id_existence',
-                                                                          located_in='item',
-                                                                          table=table,
-                                                                          valid=True))
 
             if row_ok and id_ok and type_ok:  # row semantics is checked only when the involved parts are well-formed
 
