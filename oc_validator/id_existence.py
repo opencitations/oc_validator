@@ -13,7 +13,7 @@
 # SOFTWARE.
 
 from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, \
-    openalex
+    openalex, crossref
 from SPARQLWrapper import SPARQLWrapper, JSON
 
 
@@ -37,9 +37,10 @@ class IdExistence:
         self.wikidata_mngr = wikidata.WikidataManager()
         self.wikipedia_mngr = wikipedia.WikipediaManager()
         self.openalex_mngr = openalex.OpenAlexManager()
+        self.crossref_mngr = crossref.CrossrefManager()
         self.use_meta_endpoint = use_meta_endpoint
         self.sparql = SPARQLWrapper("https://opencitations.net/meta/sparql")
-        # self.sparql.addCustomHttpHeader('Authorization', 'oc_validator_token') # todo: change value with real access token
+        self.sparql.addCustomHttpHeader('Authorization', '4c793897-7787-43ff-b7fa-00aaf7ddf7ed')
 
     def check_id_existence(self, id:str):
         """
@@ -66,7 +67,7 @@ class IdExistence:
         oc_prefix = id[:(id.index(':') + 1)]
 
         if oc_prefix == 'doi:':
-            vldt = self.doi_mngr  # you can use removeprefix(oc_prefix) from Python 3.9+
+            vldt = self.doi_mngr
         elif oc_prefix == 'isbn:':
             vldt = self.isbn_mngr
         elif oc_prefix == 'issn:':
@@ -89,7 +90,8 @@ class IdExistence:
             vldt = self.wikipedia_mngr
         elif oc_prefix == 'openalex:':
             vldt = self.openalex_mngr
-        # todo: add Crossref ID for publishers (currently not in id_manager)
+        elif oc_prefix == 'crossref:':
+            vldt = self.crossref_mngr
         else:
             return False
         return vldt.exists(id.replace(oc_prefix, '', 1))
