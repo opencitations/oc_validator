@@ -289,28 +289,17 @@ class Wellformedness:
                     if not row['editor']:
                         missing['editor'] = None
 
-        if row['id']:
-            if row['volume']:
-                if not row['venue']:
-                    missing['volume'] = [0]
-                    missing['venue'] = None
-                if row['type'] not in ['journal article', 'journal volume', 'journal issue']:
-                    missing['volume'] = [0]
-                    if not row['type']:
-                        missing['type'] = None
-                    else:
-                        missing['type'] = [0]
+        # the 2 conditions below apply to any type of BR and regardless of an ID being specified
+        # cfr. also docs/mandatory_fields.csv
 
-            if row['issue']:
-                if not row['venue']:
-                    missing['issue'] = [0]
-                    missing['venue'] = None
-                if row['type'] not in ['journal article', 'journal volume', 'journal issue']:
-                    missing['issue'] = [0]
-                    if not row['type']:
-                        missing['type'] = None
-                    else:
-                        missing['type'] = [0]
+        if row['volume'] and not row['venue']:
+            missing['volume'] = [0]
+            missing['venue'] = None
+
+        if row['issue'] and not row['venue']:
+            missing['issue'] = [0]
+            missing['venue'] = None
+
 
         return missing
 
