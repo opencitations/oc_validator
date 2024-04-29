@@ -15,12 +15,15 @@
 from re import match, search, sub
 from roman import fromRoman, InvalidRomanNumeralError
 from oc_validator.helper import Helper
+from json import load
 
 
 class Wellformedness:
     def __init__(self):
-        self.descr = 'This class groups the function for validating the well-formedness of the document.'  # todo: remove descr?
         self.helper = Helper()
+        self.br_id_schemes = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex']
+        self.ra_id_schemes = ['crossref', 'orcid', 'viaf', 'wikidata', 'ror']
+        self.id_type_dict: dict = load(open('oc_validator/id_type_alignment.json', 'r', encoding='utf-8'))
 
     def wellformedness_br_id(self, id_element):
         """
@@ -29,7 +32,7 @@ class Wellformedness:
         :param id_element: str
         :return: bool
         """
-        id_pattern = r'^(doi|issn|isbn|pmid|pmcid|url|wikidata|wikipedia):\S+$'
+        id_pattern = fr'^({"|".join(self.br_id_schemes)}):\S+$'
         if match(id_pattern, id_element):
             return True
         else:
@@ -45,8 +48,8 @@ class Wellformedness:
         #  todo: create stricter regex for not allowing characters that are likely to be illegal in a person's name/surname
         #   (e.g. digits, apostrophe, underscore, full-stop, etc.)
         outside_brackets = r'(?:[^\s,;\[\]]+(?:\s[^\s,;\[\]]+)*),?(?:\s[^\s,;\[\]]+)*'
-        inside_brackets = r'\[(crossref|orcid|viaf|wikidata|ror):\S+(?:\s(crossref|orcid|viaf|wikidata|ror):\S+)*\]'
-        ra_item_pattern = f'^(?:({outside_brackets}\\s{inside_brackets})|({outside_brackets}\\s?)|({inside_brackets}))$'
+        inside_brackets = fr'\[({"|".join(self.ra_id_schemes)}):\S+(?:\s({"|".join(self.ra_id_schemes)}):\S+)*\]'
+        ra_item_pattern = fr'^(?:({outside_brackets}\s{inside_brackets})|({outside_brackets}\s?)|({inside_brackets}))$'
 
         if match(ra_item_pattern, ra_item):
             return True
@@ -61,8 +64,8 @@ class Wellformedness:
         :return: bool
         """
         outside_brackets_pub = r'(?:[^\s\[\]]+(?:\s[^\s\[\]]+)*)'
-        inside_brackets = r'\[(crossref|orcid|viaf|wikidata|ror):\S+(?:\s(crossref|orcid|viaf|wikidata|ror):\S+)*\]'
-        ra_item_pattern = f'^(?:({outside_brackets_pub}\\s{inside_brackets})|({outside_brackets_pub}\\s?)|({inside_brackets}))$'
+        inside_brackets = fr'\[({"|".join(self.ra_id_schemes)}):\S+(?:\s({"|".join(self.ra_id_schemes)}):\S+)*\]'
+        ra_item_pattern = fr'^(?:({outside_brackets_pub}\s{inside_brackets})|({outside_brackets_pub}\s?)|({inside_brackets}))$'
 
         if match(ra_item_pattern, ra_item):
             return True
@@ -78,7 +81,7 @@ class Wellformedness:
         :return:
         bool, True if a match is found (the string is likely NOT well-formed), False if NO match is found.
         """
-        if search(r'(crossref|orcid|viaf|wikidata|ror):', sub(r'\[.*\]', '', ra_item)):
+        if search(fr'({"|".join(self.ra_id_schemes)}):', sub(r'\[.*\]', '', ra_item)):
             return True
         else:
             return False
@@ -105,8 +108,8 @@ class Wellformedness:
         """
         outside_brackets_venue = r'(?:[^\s\[\]]+(?:\s[^\s\[\]]+)*)'
         # pmcids are not valid identifiers for 'venues'!
-        inside_brackets_venue = r'\[(doi|pmid|issn|isbn|url|wikidata|wikipedia):\S+(?:\s(doi|pmid|issn|isbn|url|wikidata|wikipedia):\S+)*\]'
-        venue_pattern = f'^(?:({outside_brackets_venue}\\s{inside_brackets_venue})|({outside_brackets_venue}\\s?)|({inside_brackets_venue}))$'
+        inside_brackets_venue = fr'\[({"|".join(self.br_id_schemes)}):\S+(?:\s({"|".join(self.br_id_schemes)}):\S+)*\]'
+        venue_pattern = fr'^(?:({outside_brackets_venue}\s{inside_brackets_venue})|({outside_brackets_venue}\s?)|({inside_brackets_venue}))$'
 
         if match(venue_pattern, venue_value):
             return True
@@ -121,7 +124,7 @@ class Wellformedness:
         :return:
         bool, True if a match is found (the string is likely NOT well-formed), False if NO match is found.
         """
-        if search(r'(doi|pmid|issn|isbn|url|wikidata|wikipedia):', sub(r'\[.*\]', '', venue_value)):
+        if search(fr'({"|".join(self.br_id_schemes)}):', sub(r'\[.*\]', '', venue_value)):
             return True
         else:
             return False
@@ -193,13 +196,8 @@ class Wellformedness:
         :param type_value: str
         :return: bool
         """
-        valid_types = ['book', 'book chapter', 'book part', 'book section', 'book series', 'book set', 'book track',
-                       'component', 'dataset', 'data file', 'dissertation', 'edited book', 'journal', 'journal article',
-                       'journal issue', 'journal volume', 'monograph', 'other', 'peer review', 'posted content',
-                       'web content', 'proceedings', 'proceedings article', 'proceedings series', 'reference book',
-                       'reference entry', 'report', 'report series', 'series' 'standard', 'standard series']
 
-        if type_value in valid_types:
+        if type_value in self.id_type_dict.keys():
             return True
         else:
             return False
@@ -223,7 +221,7 @@ class Wellformedness:
 
             if row['type']:  # ID is missing and 'type' is specified
 
-                if row['type'] in ['book', 'dataset', 'data file', 'dissertation', 'edited book', 'journal',
+                if row['type'] in ['book', 'dataset', 'data file', 'dissertation', 'edited book',
                                    'journal article', 'monograph', 'other', 'peer review', 'posted content',
                                    'web content', 'proceedings article', 'reference book', 'report']:
                     if not row['title']:
@@ -291,28 +289,17 @@ class Wellformedness:
                     if not row['editor']:
                         missing['editor'] = None
 
-        if row['id']:
-            if row['volume']:
-                if not row['venue']:
-                    missing['volume'] = [0]
-                    missing['venue'] = None
-                if row['type'] not in ['journal article', 'journal volume', 'journal issue']:
-                    missing['volume'] = [0]
-                    if not row['type']:
-                        missing['type'] = None
-                    else:
-                        missing['type'] = [0]
+        # the 2 conditions below apply to any type of BR and regardless of an ID being specified
+        # cfr. also docs/mandatory_fields.csv
 
-            if row['issue']:
-                if not row['venue']:
-                    missing['issue'] = [0]
-                    missing['venue'] = None
-                if row['type'] not in ['journal article', 'journal volume', 'journal issue']:
-                    missing['issue'] = [0]
-                    if not row['type']:
-                        missing['type'] = None
-                    else:
-                        missing['type'] = [0]
+        if row['volume'] and not row['venue']:
+            missing['volume'] = [0]
+            missing['venue'] = None
+
+        if row['issue'] and not row['venue']:
+            missing['issue'] = [0]
+            missing['venue'] = None
+
 
         return missing
 

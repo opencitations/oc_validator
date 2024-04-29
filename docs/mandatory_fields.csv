@@ -1,0 +1,44 @@
+id,type,title,author,pub_date,venue,volume,issue,page,publisher,editor
+,abstract,M,O,M,,,,,,O
+,archival document,M,O,M,,,,,,O
+,audio document,M,O,M,,,,,,O
+,book,M,O,M,,,,,,O
+,computer program,M,O,M,,,,,,O
+,data management plan,M,O,M,,,,,,O
+,dataset (or data file),M,O,M,,,,,,O
+,dissertation,M,O,M,,,,,,O
+,edited book,M,O,M,,,,,,O
+,editorial,M,O,M,,,,,,O
+,journal article,M,O,M,,,,,,O
+,journal editorial,M,O,M,,,,,,O
+,monograph,M,O,M,,,,,,O
+,newspaper article,M,O,M,,,,,,O
+,other,M,O,M,,,,,,O
+,peer review,M,O,M,,,,,,O
+,posted content (or web content),M,O,M,,,,,,O
+,preprint,M,O,M,,,,,,O
+,presentation,M,O,M,,,,,,O
+,proceedings article,M,O,M,,,,,,O
+,reference book,M,O,M,,,,,,O
+,report,M,O,M,,,,,,O
+,retraction notice,M,O,M,,,,,,O
+,book chapter,M,,,M,,,,,
+,book part,M,,,M,,,,,
+,book section,M,,,M,,,,,
+,book track,M,,,M,,,,,
+,component,M,,,M,,,,,
+,reference entry,M,,,M,,,,,
+,book series,M,,,,,,,,
+,book set,M,,,,,,,,
+,journal,M,,,,,,,,
+,newspaper,M,,,,,,,,
+,proceedings,M,,,,,,,,
+,proceedings series,M,,,,,,,,
+,report series,M,,,,,,,,
+,standard,M,,,,,,,,
+,standard series,M,,,,,,,,
+,journal issue,O,,,M,,O,,,
+,newspaper issue,O,,,M,,O,,,
+,journal volume,O,,,M,O,,,,
+0..n,(editorial|journal editorial|journal article|journal volume|journal issue),,,,M,1,,,,
+0..n,(editorial|journal editorial|newspaper article|newspaper issue|journal article|journal issue),,,,M,,1,,,

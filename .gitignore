@@ -15,4 +15,7 @@ output
 validation_output
 tmp
 
+**/__pycache__/
 
+# Storage dir for validated IDs
+storage/
