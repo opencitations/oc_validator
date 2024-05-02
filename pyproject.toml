@@ -11,6 +11,7 @@ python = "^3.9"
 pyyaml = "^6.0"
 roman = "^4.0"
 sparqlwrapper = "^2.0.0"
+beautifulsoup4 = "^4.12.3"
 
 
 [tool.poetry.group.dev.dependencies]
