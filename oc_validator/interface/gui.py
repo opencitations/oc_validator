@@ -1,5 +1,8 @@
 import csv
+import json
+import warnings
 from bs4 import BeautifulSoup
+from prettierfier import prettify_html
 
 def make_html_row(row_idx, row):
 
@@ -74,50 +77,83 @@ def make_html_row(row_idx, row):
     return res
 
 
-def make_html_table(csv_path):
+def make_html_table(csv_path, rows_to_select: set, all_rows=False):
 
     with open(csv_path, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f, dialect='unix')
-
-        for r in reader:
-            colnames = r.keys()
-            break
+        colnames = reader.fieldnames
 
         row_no_col = '<th>row no.</th>'
         thead = f'<thead><tr>{row_no_col}{"".join([f"<th>{cn}</th>" for cn in colnames])}</tr></thead>'
 
         html_rows = []
 
-        for row_idx, row in enumerate(reader):
-            html_rows.append(make_html_row(row_idx, row))
-        
-        table:str = '<table>' + thead + "\n".join(html_rows) + '</table>'
-    
+        if not all_rows:
+            for row_idx, row in enumerate(reader):
+                if row_idx in rows_to_select:
+                    html_rows.append(make_html_row(row_idx, row))
+
+        else:  # all rows must be made html, ragardless of the content of rows_to_select
+            if rows_to_select:
+                warnings.warn('The output HTML table will include all the rows. To include only invalid rows, set all_rows to False.', UserWarning)
+            for row_idx, row in enumerate(reader):
+                html_rows.append(make_html_row(row_idx, row))
+
+        table:str = '<table id="table-data">' + thead + "\n".join(html_rows) + '</table>'
+        # table:str = '<table id="table-data">' + thead + "".join(html_rows) + '</table>'
+
     return table
 
 
 def make_html_doc(html_table, out_html):
     with open(out_html, 'w', encoding='utf-8') as outf:
-        full_content = f'''
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Table</title>
-        </head>
-        <body>
-        {html_table}
-        </body>
-        </html>
-        '''
+        full_content = f'<!DOCTYPE html><html lang="en"><head><title>Table</title></head><body>{html_table}</body></html>'
         # soup = BeautifulSoup(full_content, 'html.parser')
         # pretty_doc = soup.prettify(formatter=custom_formatter)
         # outf.write(pretty_doc)
-        outf.write(full_content)
-    return full_content
+        pretty_doc = prettify_html(full_content)
+        outf.write(pretty_doc)
+    return pretty_doc
 
 
-if __name__ == '__main__':
-    csv_path = './tmp/valid_meta.csv'
+def transpose_report(error_report:dict):
+    """
+    Reads the errorreport dictionary and creates a new dictionary where keys
+    correspond to the indexes of the rows that are intereseted by an error,
+    and values are the full objects representing those errors.
+    """
+    out_data = dict()
+    for err_obj in error_report:
+        rows = err_obj['position']['table'].keys()
+        for row in rows:
+            if row not in out_data:
+                out_data[row] = [err_obj]
+            else:
+                out_data[row].append(err_obj)
+    res = {int(key): value for key, value in sorted(out_data.items(), key=lambda item: int(item[0]))}
 
-    table = make_html_table(csv_path)
-    print(make_html_doc(table, 'tmp/html_doc_test.html'))
+    return res
+
+
+def select_elements(jsonreport):
+    with open(jsonreport, 'r', encoding='utf-8') as jsonfile:
+        data:list = json.load(jsonfile)
+        for idx, obj in enumerate(data):
+            selectors = []
+            objectid = f'err{idx}'
+            located_in = obj['located_in']
+
+            involved_elements_position = obj['position']['table']
+
+            for row_idx, field in involved_elements_position.items():
+                for field_name, itemlist in field.items():
+                    for itemidx in itemlist:
+                        selector = f'`#row${row_idx + 1} .field-value.${field_name} .item:nth-child(${itemidx + 1})`'
+                        selectors.append(selector)
+            yield selectors
+
+# if __name__ == '__main__':
+#     csv_path = '../../tmp/valid_meta.csv'
+#
+#     table = make_html_table(csv_path)
+#     print(make_html_doc(table, 'tmp/html_doc_test2.html'))
