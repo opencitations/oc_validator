@@ -15,7 +15,7 @@
 from csv import DictReader
 from yaml import full_load
 from json import load, dump
-from os.path import exists, join, dirname
+from os.path import exists, join, dirname, abspath
 from os import makedirs, getcwd
 from re import finditer
 from oc_validator.helper import Helper
@@ -35,10 +35,9 @@ class Validator:
         self.syntax = IdSyntax()
         self.existence = IdExistence(use_meta_endpoint=use_meta_endpoint)
         self.semantics = Semantics()
-        self.messages = full_load(open('oc_validator/messages.yaml', 'r', encoding='utf-8'))
-        # self.messages = full_load(open(join(dirname(__file__), 'messages.yaml'), 'r', encoding='utf-8'))
-        self.id_type_dict = load(
-            open('oc_validator/id_type_alignment.json', 'r', encoding='utf-8'))  # for ID-type alignment (semantics)
+        script_dir = dirname(abspath(__file__))  # Directory where the script is located
+        self.messages = full_load(open(join(script_dir, 'messages.yaml'), 'r', encoding='utf-8'))
+        self.id_type_dict = load(open(join(script_dir, 'id_type_alignment.json'), 'r', encoding='utf-8'))
         self.output_dir = output_dir
         if not exists(self.output_dir):
             makedirs(self.output_dir)
@@ -543,7 +542,7 @@ class Validator:
 
         error_final_report = []
 
-        messages = full_load(open('oc_validator/messages.yaml', 'r', encoding='utf-8'))
+        messages = self.messages
 
         id_fields_instances = []
 
