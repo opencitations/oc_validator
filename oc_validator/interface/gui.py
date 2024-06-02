@@ -1,8 +1,10 @@
 import csv
 import json
 import warnings
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
+from random import randint
 from prettierfier import prettify_html
+
 
 def make_html_row(row_idx, row):
 
@@ -105,15 +107,49 @@ def make_html_table(csv_path, rows_to_select: set, all_rows=False):
     return table
 
 
-def make_html_doc(html_table, out_html):
-    with open(out_html, 'w', encoding='utf-8') as outf:
-        full_content = f'<!DOCTYPE html><html lang="en"><head><title>Table</title></head><body>{html_table}</body></html>'
-        # soup = BeautifulSoup(full_content, 'html.parser')
-        # pretty_doc = soup.prettify(formatter=custom_formatter)
-        # outf.write(pretty_doc)
-        pretty_doc = prettify_html(full_content)
-        outf.write(pretty_doc)
-    return pretty_doc
+def add_err_info(htmldoc:str, json_filepath):
+
+    with open(json_filepath, 'r', encoding='utf8') as jsonfile:
+        report = json.load(jsonfile)
+        data = BeautifulSoup(htmldoc, 'html.parser')
+
+        for erridx, err in enumerate(report):
+            color = "#{:06x}".format(randint(0, 0xFFFFFF))  # generates random hexadecimal color
+            table = err['position']['table']
+            for rowidx, fieldobj in table.items():
+                htmlrow = data.find(id=f'row{rowidx}')
+                for fieldkey, fieldvalue in fieldobj.items():
+                    htmlfield = htmlrow.find(class_=fieldkey)
+                    if fieldvalue is not None:
+                        all_children_items = htmlfield.find_all(class_='item')
+                        for itemidx in fieldvalue:
+                            item: Tag = all_children_items[itemidx]
+                            item['class'].append(f'err-idx-{erridx}')
+                            item['class'].append('invalid-data')
+                            item['class'].append('error') if err['error_type'] == 'error' else item['class'].append('warning')
+                            square = data.new_tag('span', **{'class':'error'}) if err['error_type'] == 'error' else data.new_tag('span', **{'class':'warning'})# TODO: add if condition for warnings, assigning the class according to the error_type in the report
+                            square['style'] = f'background-color: {color}'
+                            square['class'].append('error-icon')
+                            square['class'].append(f'err-idx-{erridx}')
+                            square['title'] = err['message']
+                            square['onclick'] = 'highlightInvolvedElements(this)'
+                            item.insert_after(square)  # inserts span element representing the error metadata
+
+                    else:
+                        errorpart = htmlfield
+                        errorpart['class'].append(f'err-idx-{erridx}')
+                        errorpart['class'].append('invalid-data')
+                        errorpart['class'].append('error') if err['error_type'] == 'error' else errorpart['class'].append('warning')
+                        square = data.new_tag('span', **{'class':'error'}) if err['error_type'] == 'error' else data.new_tag('span', **{'class':'warning'})
+                        square['style'] = f'background-color: {color}'
+                        square['class'].append('error-icon')
+                        square['class'].append(f'err-idx-{erridx}')
+                        square['title'] = err['message']
+                        square['onclick'] = 'highlightInvolvedElements(this)'
+                        errorpart.insert_after(square)  # inserts span element representing the error metadata
+
+        result = str(data)
+        return result
 
 
 def transpose_report(error_report:dict):
@@ -152,8 +188,3 @@ def select_elements(jsonreport):
                         selectors.append(selector)
             yield selectors
 
-# if __name__ == '__main__':
-#     csv_path = '../../tmp/valid_meta.csv'
-#
-#     table = make_html_table(csv_path)
-#     print(make_html_doc(table, 'tmp/html_doc_test2.html'))

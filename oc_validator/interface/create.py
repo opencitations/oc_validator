@@ -1,7 +1,5 @@
 from jinja2 import Environment, FileSystemLoader
-from oc_validator.interface.gui import make_html_table
-from add_errors import add_err_info
-from prettierfier import prettify_html
+from oc_validator.interface.gui import make_html_table, add_err_info
 from json import load
 
 # Load the Jinja2 template
