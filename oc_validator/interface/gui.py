@@ -1,12 +1,21 @@
 import csv
-import json
 import warnings
 from bs4 import BeautifulSoup, Tag
 from random import randint
+from jinja2 import Environment, FileSystemLoader
+from json import load
+from os.path import realpath
+import webbrowser
 # from prettierfier import prettify_html
 
 
 def make_html_row(row_idx, row):
+    """
+    Converts a single row from the CSV table into an HTML table row with custom appropriate structure.
+    :param row_idx (int): the original index of the row to process, as it appears on the original table. Indexing is 0-based.
+    :param row (dict): the dictionary representing the row
+    :return (str): the HTML table row
+    """
 
     html_string_list = []
 
@@ -79,6 +88,13 @@ def make_html_row(row_idx, row):
 
 
 def make_html_table(csv_path, rows_to_select: set, all_rows=False):
+    """
+    Converts the CSV table into an HTML table.
+    :param csv_path: the file path to the CSV table data.
+    :param rows_to_select (set): Set containing the indexes (integers) of the rows to be represented in the output HTML table. Row indexing is 0-based.
+    :param all_rows: True if all the rows in the CSV table should be included in the output HTML table regardless of rows_to_select parameter, False otherwise. Defaults to False.
+    :return (str): HTML string of the table (without validation information).
+    """
 
     with open(csv_path, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f, dialect='unix')
@@ -106,9 +122,15 @@ def make_html_table(csv_path, rows_to_select: set, all_rows=False):
 
 
 def add_err_info(htmldoc:str, json_filepath):
+    """
+    Adds validation information from the JSON validation report to the HTML table.
+    :param htmldoc: the HTML table or the whole HTML document, as a string
+    :param json_filepath: the filepath to the JSON validation report.
+    :return: the HTML string enriched with validation information
+    """
 
     with open(json_filepath, 'r', encoding='utf8') as jsonfile:
-        report = json.load(jsonfile)
+        report = load(jsonfile)
         data = BeautifulSoup(htmldoc, 'html.parser')
 
         for erridx, err in enumerate(report):
@@ -149,9 +171,57 @@ def add_err_info(htmldoc:str, json_filepath):
         result = str(data)
         return result
 
+def create_and_show_gui(csv_path, report_path, output_html_path):
+
+    # Prepare the Jinja2 environment
+    env = Environment(loader=FileSystemLoader('.'))
+
+    with open(report_path, 'r', encoding='utf-8') as f:
+        report:list = load(f)
+
+    if not len(report):  # -> the table validates, no errors!
+        print('The submitted data is valid and there are no errors to represent.')
+        template = env.get_template('valid_template.html')
+        html_output = template.render()
+        with open(output_html_path, "w", encoding='utf-8') as file:
+            file.write(html_output)
+        html_doc_fp = file.name
+        print(f"HTML document generated successfully at {realpath(html_doc_fp)}.")
+        webbrowser.open('file://' + realpath(html_doc_fp))
+        return None
+
+    error_count = len(report)
+
+    # set Jinja template to the one for invalid data representation
+    template = env.get_template('invalid-template.html')
+
+    # get set containing the indexes of invalid rows
+    invalid_rows = set()
+    invalid_rows.update({int(idx) for d in report for idx in d['position']['table'].keys()})
+
+    # create HTML table containing the invalid rows
+    raw_html_table: str = make_html_table(csv_path, invalid_rows, all_rows=False)
+
+    # add error information to the HTML table
+    final_html_table = add_err_info(raw_html_table, report_path)
+
+    # Render the template with the table
+    html_output = template.render(table=final_html_table, error_count=error_count)
+
+    # Save the resulting HTML document to a file
+    with open(output_html_path, "w", encoding='utf-8') as file:
+        file.write(html_output)
+        html_doc_fp = file.name
+
+    print(f"HTML document generated successfully at {realpath(html_doc_fp)}.")
+
+    # Open the HTML file in the default web browser
+    webbrowser.open('file://' + realpath(html_doc_fp))
+
 
 def transpose_report(error_report:dict):
     """
+    NOT USED!!!
     Reads the errorreport dictionary and creates a new dictionary where keys
     correspond to the indexes of the rows that are intereseted by an error,
     and values are the full objects representing those errors.
@@ -167,22 +237,4 @@ def transpose_report(error_report:dict):
     res = {int(key): value for key, value in sorted(out_data.items(), key=lambda item: int(item[0]))}
 
     return res
-
-
-def select_elements(jsonreport):
-    with open(jsonreport, 'r', encoding='utf-8') as jsonfile:
-        data:list = json.load(jsonfile)
-        for idx, obj in enumerate(data):
-            selectors = []
-            objectid = f'err{idx}'
-            located_in = obj['located_in']
-
-            involved_elements_position = obj['position']['table']
-
-            for row_idx, field in involved_elements_position.items():
-                for field_name, itemlist in field.items():
-                    for itemidx in itemlist:
-                        selector = f'`#row${row_idx + 1} .field-value.${field_name} .item:nth-child(${itemidx + 1})`'
-                        selectors.append(selector)
-            yield selectors
 

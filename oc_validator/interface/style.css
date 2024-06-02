@@ -1,3 +1,10 @@
+.counter-par {
+    text-align: center;
+    font-size: larger;
+}
+.error-counter {
+    font-size: larger;
+}
 table {
     margin: 1em 1em 1em 1em;
     border: 1px solid black;
