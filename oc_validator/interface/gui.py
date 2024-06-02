@@ -3,7 +3,7 @@ import json
 import warnings
 from bs4 import BeautifulSoup, Tag
 from random import randint
-from prettierfier import prettify_html
+# from prettierfier import prettify_html
 
 
 def make_html_row(row_idx, row):
@@ -68,7 +68,6 @@ def make_html_row(row_idx, row):
                 new_value = f'<span class="field-value {col_name}"><span class="item"><span class="item-component">{value}</span></span></span>'
             
             html_string_list.append(new_value)
-            #print(new_value, '\n')
         else:
             new_value = f'<span class="field-value {col_name}"><span class="item"><span class="item-component"></span></span></span>'
             html_string_list.append(new_value)
@@ -102,7 +101,6 @@ def make_html_table(csv_path, rows_to_select: set, all_rows=False):
                 html_rows.append(make_html_row(row_idx, row))
 
         table:str = '<table id="table-data">' + thead + "\n".join(html_rows) + '</table>'
-        # table:str = '<table id="table-data">' + thead + "".join(html_rows) + '</table>'
 
     return table
 
