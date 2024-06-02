@@ -11,14 +11,11 @@ python = "^3.9"
 pyyaml = "^6.0"
 roman = "^4.0"
 sparqlwrapper = "^2.0.0"
-beautifulsoup4 = "^4.12.3"
 oc-ds-converter = "^1.0.3"
 
 
 [tool.poetry.group.dev.dependencies]
 jsonschema = "^4.17.3"
-prettierfier = "^1.0.3"
-jinja2 = "^3.1.4"
 
 [build-system]
 requires = ["poetry-core"]
