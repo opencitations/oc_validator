@@ -16,6 +16,7 @@ from re import match, search, sub
 from roman import fromRoman, InvalidRomanNumeralError
 from oc_validator.helper import Helper
 from json import load
+from os.path import join, dirname, abspath
 
 
 class Wellformedness:
@@ -23,7 +24,8 @@ class Wellformedness:
         self.helper = Helper()
         self.br_id_schemes = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex']
         self.ra_id_schemes = ['crossref', 'orcid', 'viaf', 'wikidata', 'ror']
-        self.id_type_dict: dict = load(open('oc_validator/id_type_alignment.json', 'r', encoding='utf-8'))
+        self.id_type_dict = load(open(join(dirname(abspath(__file__)), 'id_type_alignment.json'), 'r', encoding='utf-8'))
+
 
     def wellformedness_br_id(self, id_element):
         """
