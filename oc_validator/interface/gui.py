@@ -6,6 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from json import load
 from os.path import realpath
 import webbrowser
+from os.path import join, dirname, abspath
 # from prettierfier import prettify_html
 
 
@@ -25,7 +26,7 @@ def make_html_row(row_idx, row):
         if value:
             new_value = value
 
-            if col_name == 'id':
+            if col_name in ['id', 'citing_id', 'cited_id']:
                 items = value.split()
                 for idx, item in enumerate(items):
                     s = f'<span class="item"><span class="item-component">{item}</span></span>'
@@ -73,7 +74,7 @@ def make_html_row(row_idx, row):
                 else:
                     new_value = f'<span class="field-value {col_name}"><span class="item"><span class="item-component">{value}</span></span></span>'
 
-            else: # i.e. if col_name in ['type', 'issue', 'volume', 'page', 'pub_date']:
+            else: # i.e. if col_name in ['type', 'issue', 'volume', 'page', 'pub_date', 'citing_publication_date', 'cited_publication_date']:
                 new_value = f'<span class="field-value {col_name}"><span class="item"><span class="item-component">{value}</span></span></span>'
             
             html_string_list.append(new_value)
@@ -174,7 +175,8 @@ def add_err_info(htmldoc:str, json_filepath):
 def create_and_show_gui(csv_path, report_path, output_html_path):
 
     # Prepare the Jinja2 environment
-    env = Environment(loader=FileSystemLoader('.'))
+    # env = Environment(loader=FileSystemLoader('.'))
+    env = Environment(loader=FileSystemLoader(dirname(abspath(__file__))))
 
     with open(report_path, 'r', encoding='utf-8') as f:
         report:list = load(f)
@@ -205,8 +207,21 @@ def create_and_show_gui(csv_path, report_path, output_html_path):
     # add error information to the HTML table
     final_html_table = add_err_info(raw_html_table, report_path)
 
+    # read CSS and JS files to integrate them into HTML document 
+    with (
+        open(join(dirname(abspath(__file__)), 'style.css'), 'r', encoding='utf-8') as cssf, 
+        open(join(dirname(abspath(__file__)), 'script.js'), 'r', encoding='utf-8') as jsf
+        ):
+        stylesheet = cssf.read()
+        script = jsf.read()
+
     # Render the template with the table
-    html_output = template.render(table=final_html_table, error_count=error_count)
+    html_output = template.render(
+        table=final_html_table,
+        error_count=error_count,
+        stylesheet=stylesheet,
+        script=script
+        )
 
     # Save the resulting HTML document to a file
     with open(output_html_path, "w", encoding='utf-8') as file:

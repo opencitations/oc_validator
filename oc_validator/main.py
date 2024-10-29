@@ -60,6 +60,9 @@ class Validator:
                      data):
                 process_type = 'cits_csv'
                 return process_type
+            elif all(set(row.keys()) == {'citing_id', 'cited_id'} for row in data): # support also Index tables with no publication dates
+                process_type = 'cits_csv'
+                return process_type
             else:
                 return process_type
         except KeyError:
@@ -72,7 +75,7 @@ class Validator:
         elif self.table_to_process == 'cits_csv':
             return self.validate_cits()
         else:
-            return "The input table is not processable, since it does not comply with neither META-CSV nor CITS-CSV basic structure"
+            print("The input table is not processable, since it does not comply with neither META-CSV nor CITS-CSV basic structure.")
 
     def validate_meta(self) -> list:
         """
@@ -525,7 +528,7 @@ class Validator:
 
         # write error_final_report to external JSON file
         with open(join(self.output_dir, 'out_validate_meta.json'), 'w', encoding='utf-8') as f:
-            dump(error_final_report, f)
+            dump(error_final_report, f, indent=4)
 
         # write human-readable validation summary to txt file
         textual_report = self.helper.create_validation_summary(error_final_report)
@@ -666,7 +669,7 @@ class Validator:
 
         # write error_final_report to external JSON file
         with open(join(self.output_dir, 'out_validate_cits.json'), 'w', encoding='utf-8') as f:
-            dump(error_final_report, f)
+            dump(error_final_report, f, indent=4)
 
         # write human-readable validation summary to txt file
         textual_report = self.helper.create_validation_summary(error_final_report)
