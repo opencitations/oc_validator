@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "oc-validator"
-version = "0.3.0"
+version = "0.3.1"
 description = "A software to validate CSV documents storing citation data and bibliographic metadata according to the OpenCitations Data Model."
 authors = ["Elia Rizzetto <elia.rizzetto@gmail.com>", "Silvio Peroni <silvio.peroni@unibo.it>"]
 readme = "README.md"
