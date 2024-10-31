@@ -87,6 +87,15 @@ def make_html_row(row_idx, row):
     res = f'<tr id="row{row_idx}">{row_no_cell}{"".join([f"<td>{cell_value}</td>" for cell_value in html_string_list])}</tr>'
     return res
 
+def read_csv(csv_doc, del_position=0):
+        delimiters_to_try=[',',';','\t']
+        with open(csv_doc, 'r', encoding='utf-8') as f:
+            data_dict = list(csv.DictReader(f, delimiter=delimiters_to_try[del_position]))
+            if len(data_dict[0].keys()) > 1:  # if each dict has more than 1 key, it means it's read correctly
+                return data_dict
+            else:
+                new_del_position = del_position+1
+                return read_csv(csv_doc, new_del_position)  # try with another delimiter
 
 def make_html_table(csv_path, rows_to_select: set, all_rows=False):
     """
@@ -97,27 +106,26 @@ def make_html_table(csv_path, rows_to_select: set, all_rows=False):
     :return (str): HTML string of the table (without validation information).
     """
 
-    with open(csv_path, 'r', encoding='utf-8') as f:
-        reader = csv.DictReader(f, dialect='unix')
-        colnames = reader.fieldnames
+    data = read_csv(csv_path)
+    colnames = data[0].keys()
 
-        row_no_col = '<th>row no.</th>'
-        thead = f'<thead><tr>{row_no_col}{"".join([f"<th>{cn}</th>" for cn in colnames])}</tr></thead>'
+    row_no_col = '<th>row no.</th>'
+    thead = f'<thead><tr>{row_no_col}{"".join([f"<th>{cn}</th>" for cn in colnames])}</tr></thead>'
 
-        html_rows = []
+    html_rows = []
 
-        if not all_rows:
-            for row_idx, row in enumerate(reader):
-                if row_idx in rows_to_select:
-                    html_rows.append(make_html_row(row_idx, row))
-
-        else:  # all rows must be made html, ragardless of the content of rows_to_select
-            if rows_to_select:
-                warnings.warn('The output HTML table will include all the rows. To include only invalid rows, set all_rows to False.', UserWarning)
-            for row_idx, row in enumerate(reader):
+    if not all_rows:
+        for row_idx, row in enumerate(data):
+            if row_idx in rows_to_select:
                 html_rows.append(make_html_row(row_idx, row))
 
-        table:str = '<table id="table-data">' + thead + "\n".join(html_rows) + '</table>'
+    else:  # all rows must be made html, ragardless of the content of rows_to_select
+        if rows_to_select:
+            warnings.warn('The output HTML table will include all the rows. To include only invalid rows, set all_rows to False.', UserWarning)
+        for row_idx, row in enumerate(data):
+            html_rows.append(make_html_row(row_idx, row))
+
+    table:str = '<table id="table-data">' + thead + "\n".join(html_rows) + '</table>'
 
     return table
 

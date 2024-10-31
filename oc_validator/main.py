@@ -23,6 +23,7 @@ from oc_validator.csv_wellformedness import Wellformedness
 from oc_validator.id_syntax import IdSyntax
 from oc_validator.id_existence import IdExistence
 from oc_validator.semantics import Semantics
+from tqdm import tqdm
 from argparse import ArgumentParser
 
 
@@ -43,10 +44,15 @@ class Validator:
             makedirs(self.output_dir)
         self.visited_ids = dict()
 
-    def read_csv(self, csv_doc):
+    def read_csv(self, csv_doc, del_position=0):
+        delimiters_to_try=[',',';','\t']
         with open(csv_doc, 'r', encoding='utf-8') as f:
-            data_dict = list(DictReader(f))
-            return data_dict
+            data_dict = list(DictReader(f, delimiter=delimiters_to_try[del_position]))
+            if len(data_dict[0].keys()) > 1:  # if each dict has more than 1 key, it means it's read correctly
+                return data_dict
+            else:
+                new_del_position = del_position+1
+                return self.read_csv(csv_doc, new_del_position)  # try with another delimiter
 
     def process_selector(self, data: list):
         process_type = None
@@ -89,7 +95,7 @@ class Validator:
 
         br_id_groups = []
 
-        for row_idx, row in enumerate(self.data):
+        for row_idx, row in enumerate(tqdm(self.data)):
             row_ok = True  # switch for row well-formedness
             id_ok = True  # switch for id field well-formedness
             type_ok = True  # switch for type field well-formedness
@@ -549,7 +555,7 @@ class Validator:
 
         id_fields_instances = []
 
-        for row_idx, row in enumerate(self.data):
+        for row_idx, row in enumerate(tqdm(self.data)):
             for field, value in row.items():
                 if field == 'citing_id' or field == 'cited_id':
                     if not value:  # Check required fields
