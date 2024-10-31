@@ -23,6 +23,7 @@ from oc_validator.csv_wellformedness import Wellformedness
 from oc_validator.id_syntax import IdSyntax
 from oc_validator.id_existence import IdExistence
 from oc_validator.semantics import Semantics
+from tqdm import tqdm
 from argparse import ArgumentParser
 
 
@@ -43,10 +44,15 @@ class Validator:
             makedirs(self.output_dir)
         self.visited_ids = dict()
 
-    def read_csv(self, csv_doc):
+    def read_csv(self, csv_doc, del_position=0):
+        delimiters_to_try=[',',';','\t']
         with open(csv_doc, 'r', encoding='utf-8') as f:
-            data_dict = list(DictReader(f))
-            return data_dict
+            data_dict = list(DictReader(f, delimiter=delimiters_to_try[del_position]))
+            if len(data_dict[0].keys()) > 1:  # if each dict has more than 1 key, it means it's read correctly
+                return data_dict
+            else:
+                new_del_position = del_position+1
+                return self.read_csv(csv_doc, new_del_position)  # try with another delimiter
 
     def process_selector(self, data: list):
         process_type = None
@@ -58,6 +64,9 @@ class Validator:
             elif all(set(row.keys()) == {'citing_id', 'citing_publication_date', 'cited_id', 'cited_publication_date'}
                      for row in
                      data):
+                process_type = 'cits_csv'
+                return process_type
+            elif all(set(row.keys()) == {'citing_id', 'cited_id'} for row in data): # support also Index tables with no publication dates
                 process_type = 'cits_csv'
                 return process_type
             else:
@@ -72,7 +81,7 @@ class Validator:
         elif self.table_to_process == 'cits_csv':
             return self.validate_cits()
         else:
-            return "The input table is not processable, since it does not comply with neither META-CSV nor CITS-CSV basic structure"
+            print("The input table is not processable, since it does not comply with neither META-CSV nor CITS-CSV basic structure.")
 
     def validate_meta(self) -> list:
         """
@@ -86,7 +95,7 @@ class Validator:
 
         br_id_groups = []
 
-        for row_idx, row in enumerate(self.data):
+        for row_idx, row in enumerate(tqdm(self.data)):
             row_ok = True  # switch for row well-formedness
             id_ok = True  # switch for id field well-formedness
             type_ok = True  # switch for type field well-formedness
@@ -525,7 +534,7 @@ class Validator:
 
         # write error_final_report to external JSON file
         with open(join(self.output_dir, 'out_validate_meta.json'), 'w', encoding='utf-8') as f:
-            dump(error_final_report, f)
+            dump(error_final_report, f, indent=4)
 
         # write human-readable validation summary to txt file
         textual_report = self.helper.create_validation_summary(error_final_report)
@@ -546,7 +555,7 @@ class Validator:
 
         id_fields_instances = []
 
-        for row_idx, row in enumerate(self.data):
+        for row_idx, row in enumerate(tqdm(self.data)):
             for field, value in row.items():
                 if field == 'citing_id' or field == 'cited_id':
                     if not value:  # Check required fields
@@ -666,7 +675,7 @@ class Validator:
 
         # write error_final_report to external JSON file
         with open(join(self.output_dir, 'out_validate_cits.json'), 'w', encoding='utf-8') as f:
-            dump(error_final_report, f)
+            dump(error_final_report, f, indent=4)
 
         # write human-readable validation summary to txt file
         textual_report = self.helper.create_validation_summary(error_final_report)
