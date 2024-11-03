@@ -82,9 +82,9 @@ def make_html_row(row_idx, row):
             new_value = f'<span class="field-value {col_name}"><span class="item"><span class="item-component"></span></span></span>'
             html_string_list.append(new_value)
 
-    row_no_cell = f'<td><span>{row_idx}</span></td>'
+    row_no_cell = f'<td><span>{str(int(row_idx)+1)}</span></td>'
     # add row index both as a column in the table and as ID of the HTML element corresponding to the row
-    res = f'<tr id="row{row_idx}">{row_no_cell}{"".join([f"<td>{cell_value}</td>" for cell_value in html_string_list])}</tr>'
+    res = f'<tr id="row{str(int(row_idx)+1)}">{row_no_cell}{"".join([f"<td>{cell_value}</td>" for cell_value in html_string_list])}</tr>'
     return res
 
 def read_csv(csv_doc, del_position=0):
@@ -146,7 +146,7 @@ def add_err_info(htmldoc:str, json_filepath):
             color = "#{:06x}".format(randint(0, 0xFFFFFF))  # generates random hexadecimal color
             table = err['position']['table']
             for rowidx, fieldobj in table.items():
-                htmlrow = data.find(id=f'row{rowidx}')
+                htmlrow = data.find(id=f'row{str(int(rowidx)+1)}')
                 for fieldkey, fieldvalue in fieldobj.items():
                     htmlfield = htmlrow.find(class_=fieldkey)
                     if fieldvalue is not None:

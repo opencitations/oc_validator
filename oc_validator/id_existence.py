@@ -15,6 +15,7 @@
 from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, \
     openalex, crossref
 from SPARQLWrapper import SPARQLWrapper, JSON
+import time
 
 
 class IdExistence:
@@ -96,7 +97,7 @@ class IdExistence:
             return False
         return vldt.exists(id.replace(oc_prefix, '', 1))
 
-    def query_meta_triplestore(self, id:str):
+    def query_meta_triplestore(self, id:str, retries: int = 3, delay: float = 2.0):
         """
         Checks if an ID exists by looking it up in the OpenCitations Meta triplestore via a SPARQL query to Meta's endpoint.
         :param id: the string of the ID (prefix included)
@@ -117,7 +118,17 @@ class IdExistence:
         }
         ''' % (lookup_id, datacite_id_scheme)
 
-        sparql.setQuery(q)
-        sparql.setReturnFormat(JSON)
-        result: dict = sparql.query().convert()
-        return result.get('boolean')
+        for attempt in range(retries):
+            try:
+                sparql.setQuery(q)
+                sparql.setReturnFormat(JSON)
+                result: dict = sparql.query().convert()
+                return result.get('boolean')
+            
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed with error: {e}")
+                if attempt < retries - 1:
+                    time.sleep(delay)  # wait before retrying
+                else:
+                    print("Max retries reached. Query failed.")
+                    return False
