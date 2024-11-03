@@ -19,7 +19,7 @@ m16: "The value of 'type' is not well-formed. The accepted values are exactly th
 m17: "A value of a required field is missing, or the wrong value is specified. Please refer to the table at https://github.com/opencitations/oc_validator/blob/main/docs/mandatory_fields.csv ."
 m18: "The page interval specified in 'page' seems to be impossible: the start page appears to be greater than the end page."
 m19: "The ID in 'id'/'venue' does not conform to the syntax (pattern) of its identifier scheme. Please refer to the relevant  documentation by the specific identifier provider."
-m20: "The ID in 'id'/'venue' is not registered as a persistent identifier for any bibliographic resource, i.e. it does not exist."
+m20: "The ID in 'id'/'venue' is not registered as a persistent identifier for any bibliographic resource, i.e. it either does not exist or is not registered in OpenCitations Meta (depending on the process configuration)."
 m21: "The ID in 'author'/'editor'/'publisher' does not conform to the syntax (pattern) of its identifier scheme. Please  refer to the relevant documentation by the specific identifier provider."
 m22: "The ID in 'author'/'editor'/'publisher' is not registered as a persistent identifier for any bibliographic resource,  i.e. it does not exist."
 m23: "According to the OpenCitations Data Model, the type specified for the bibliographic entity is not compatible with  the ID(s) associated with it."
