@@ -23,3 +23,5 @@ m20: "The ID in 'id'/'venue' is not registered as a persistent identifier for an
 m21: "The ID in 'author'/'editor'/'publisher' does not conform to the syntax (pattern) of its identifier scheme. Please  refer to the relevant documentation by the specific identifier provider."
 m22: "The ID in 'author'/'editor'/'publisher' is not registered as a persistent identifier for any bibliographic resource,  i.e. it does not exist."
 m23: "According to the OpenCitations Data Model, the type specified for the bibliographic entity is not compatible with  the ID(s) associated with it."
+m24: "No citations have been provided in CITS-CSV for this publication, i.e. it does not appear to be involved in a citation as either citing or cited entity."
+m25: "This entity is involved in a citation as either citing or cited entity in CITS-CSV, but no metadata has been provided for it in META-CSV."

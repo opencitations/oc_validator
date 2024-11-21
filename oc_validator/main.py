@@ -27,9 +27,33 @@ from tqdm import tqdm
 from argparse import ArgumentParser
 
 
+# --- Custom Exception classes. ---
+class ValidationError(Exception):
+    """Base class for errors related to the validation process."""
+    pass
+
+class InvalidTableError(ValidationError):
+    """Raised when the submitted table cannot be identified as META-CSV or CITS-CSV, therefore cannot be processed."""
+    def __init__(self, input_fp):
+        super().__init__(f'The submitted table in file "{input_fp}" is not processable, since it does not comply with '
+                         f'neither META-CSV nor CITS-CSV basic structure.')
+        self.input_fp = input_fp
+
+class TableNotMatchingInstance(ValidationError):
+    """Raised when the table submitted for a specific Validator instance in ClosureValidator does not match the process validation type,
+        e.g. a CITS-CSV table is submitted for an instance of Validator that is intended to process a META-CSV table.
+    """
+    def __init__(self, input_fp, detected_table_type, correct_table_type):
+        super().__init__(f'The submitted table in file "{input_fp}" is of type {detected_table_type}, but should be of type {correct_table_type} instead.')
+        self.input_fp = input_fp
+        self.detected_table_type = detected_table_type
+        self.correct_table_type = correct_table_type
+
+# --- Class for the main process; validates one document at a time via the Validator.validate() method. ---
 class Validator:
     def __init__(self, csv_doc: str, output_dir: str, use_meta_endpoint=False, verify_id_existence=True):
-        self.data = self.read_csv(csv_doc)
+        self.csv_doc = csv_doc
+        self.data = self.read_csv(self.csv_doc)
         self.table_to_process = self.process_selector(self.data)
         self.helper = Helper()
         self.wellformed = Wellformedness()
@@ -42,6 +66,12 @@ class Validator:
         self.output_dir = output_dir
         if not exists(self.output_dir):
             makedirs(self.output_dir)
+        if self.table_to_process == 'meta_csv':
+            self.output_fp_json = self._make_output_filepath('out_validate_meta', 'json')
+            self.output_fp_txt = self._make_output_filepath('meta_validation_summary', 'txt')
+        elif self.table_to_process == 'cits_csv':
+            self.output_fp_json = self._make_output_filepath('out_validate_cits', 'json')
+            self.output_fp_txt = self._make_output_filepath('cits_validation_summary', 'txt')
         self.visited_ids = dict()
         self.verify_id_existence = verify_id_existence
 
@@ -62,27 +92,37 @@ class Validator:
                                         "publisher", "editor"} for row in data):
                 process_type = 'meta_csv'
                 return process_type
-            elif all(set(row.keys()) == {'citing_id', 'citing_publication_date', 'cited_id', 'cited_publication_date'}
-                     for row in
-                     data):
+            elif all(set(row.keys()) == {'citing_id', 'citing_publication_date', 'cited_id', 'cited_publication_date'} for row in data):
                 process_type = 'cits_csv'
                 return process_type
             elif all(set(row.keys()) == {'citing_id', 'cited_id'} for row in data): # support also Index tables with no publication dates
                 process_type = 'cits_csv'
                 return process_type
             else:
-                return process_type
+                raise InvalidTableError(self.csv_doc)
         except KeyError:
-            print('The submitted table cannot be read as neither META-CSV nor CITS-CSV')
-            return process_type
+            raise InvalidTableError(self.csv_doc)
+        
+    def _make_output_filepath(self, base_filename, extension):
+        """
+        Generates a unique output filepath, checks if a file with the same name exists, and if so appends an incrementing number.
+        """
+        
+        full_path = join(self.output_dir, f"{base_filename}.{extension}")
+        counter = 1
+
+        # If filepath already exists, increment the counter and check for existing files
+        while exists(full_path):
+            full_path = join(self.output_dir, f"{base_filename}_{counter}.{extension}")
+            counter += 1
+        
+        return full_path
 
     def validate(self):
         if self.table_to_process == 'meta_csv':
             return self.validate_meta()
         elif self.table_to_process == 'cits_csv':
             return self.validate_cits()
-        else:
-            print("The input table is not processable, since it does not comply with neither META-CSV nor CITS-CSV basic structure.")
 
     def validate_meta(self) -> list:
         """
@@ -538,12 +578,12 @@ class Validator:
             error_final_report.extend(duplicate_report)
 
         # write error_final_report to external JSON file
-        with open(join(self.output_dir, 'out_validate_meta.json'), 'w', encoding='utf-8') as f:
+        with open(self.output_fp_json, 'w', encoding='utf-8') as f:
             dump(error_final_report, f, indent=4)
 
         # write human-readable validation summary to txt file
         textual_report = self.helper.create_validation_summary(error_final_report)
-        with open(join(self.output_dir, "meta_validation_summary.txt"), "w", encoding='utf-8') as f:
+        with open(self.output_fp_txt, "w", encoding='utf-8') as f:
             f.write(textual_report)
 
         return error_final_report
@@ -680,15 +720,185 @@ class Validator:
             error_final_report.extend(duplicate_report)
 
         # write error_final_report to external JSON file
-        with open(join(self.output_dir, 'out_validate_cits.json'), 'w', encoding='utf-8') as f:
+        with open(self.output_fp_json, 'w', encoding='utf-8') as f:
             dump(error_final_report, f, indent=4)
 
         # write human-readable validation summary to txt file
         textual_report = self.helper.create_validation_summary(error_final_report)
-        with open(join(self.output_dir, "cits_validation_summary.txt"), "w", encoding='utf-8') as f:
+        with open(self.output_fp_txt, "w", encoding='utf-8') as f:
             f.write(textual_report)
 
         return error_final_report
+
+
+class ClosureValidator:
+
+    def __init__(self, meta_csv_doc, meta_output_dir, cits_csv_doc, cits_output_dir, meta_kwargs=None, cits_kwargs=None) -> None:
+        self.meta_csv_doc = meta_csv_doc
+        self.meta_output_dir = meta_output_dir
+        self.cits_csv_doc = cits_csv_doc
+        self.cits_output_dir = cits_output_dir
+
+        script_dir = dirname(abspath(__file__))  # Directory where the script is located
+        self.messages = full_load(open(join(script_dir, 'messages.yaml'), 'r', encoding='utf-8'))
+
+        # Define default kwargs for optional configuration of the two instances of Validator
+        default_kwargs = {'use_meta_endpoint': False, 'verify_id_existence': True}
+
+        # Merge user-provided kwargs with defaults
+        meta_kwargs = {**default_kwargs, **(meta_kwargs or {})}
+        cits_kwargs = {**default_kwargs, **(cits_kwargs or {})}
+
+        # Create Validator instances with merged kwargs
+        self.meta_validator = Validator(self.meta_csv_doc, self.meta_output_dir, **meta_kwargs)
+        self.cits_validator = Validator(self.cits_csv_doc, self.cits_output_dir, **cits_kwargs)
+
+        self.helper = Helper()
+
+        # Check if each of the two Validator instances is passed the expected table type
+        if self.meta_validator.table_to_process != 'meta_csv':
+            raise TableNotMatchingInstance(self.meta_csv_doc, self.meta_validator.table_to_process, 'meta_csv')
+        if self.cits_validator.table_to_process != 'cits_csv':
+            raise TableNotMatchingInstance(self.cits_csv_doc, self.cits_validator.table_to_process, 'cits_csv')
+
+
+    def check_closure(self):
+
+        ids_positions_meta = dict()
+        ids_positions_cits = dict()
+        meta_br_ids_groups = []
+        cits_br_ids_groups = []
+        
+        meta_json_report = []
+        cits_json_report = []
+
+        # Collect entities in META
+        for row_idx, row in enumerate(self.meta_validator.data):
+            if row.get('id'):
+                ids:list = [i.strip() for i in row['id'].split()]
+                meta_br_ids_groups.append(set(ids))
+                for item in set(ids):
+                    if not ids_positions_meta.get(item):
+                        ids_positions_meta[item] = [{row_idx: {'id': list(range(len(ids)))}}]
+                    else:
+                        ids_positions_meta[item].append({row_idx: {'id': list(range(len(ids)))}})
+
+        # Collect entities in CITS-CSV
+        for row_idx, row in enumerate(self.cits_validator.data):
+            if row.get('citing_id'):
+                ids:list = [i.strip() for i in row['citing_id'].split()]
+                cits_br_ids_groups.append(set(ids))
+                for item in set(ids):
+                    if not ids_positions_cits.get(item):
+                        ids_positions_cits[item] = [{row_idx: {'citing_id': list(range(len(ids)))}}]
+                    else:
+                        ids_positions_cits[item].append({row_idx: {'citing_id': list(range(len(ids)))}})
+            if row.get('cited_id'):
+                ids:list = [i.strip() for i in row['cited_id'].split()]
+                cits_br_ids_groups.append(set(ids))
+                for item in set(ids):
+                    if not ids_positions_cits.get(item):
+                        ids_positions_cits[item] = [{row_idx: {'cited_id': list(range(len(ids)))}}]
+                    else:
+                        ids_positions_cits[item].append({row_idx: {'cited_id': list(range(len(ids)))}})
+
+        ids_with_metadata = set(ids_positions_meta.keys())
+        ids_in_citations = set(ids_positions_cits.keys())
+        meta_ids_missing_citations = ids_with_metadata.difference(ids_in_citations) # entities that have metadata but are not involved in any citation
+        cits_ids_missing_metadata = ids_in_citations.difference(ids_with_metadata) # entities that are represented in citations but have no metadata
+
+        meta_entities = self.helper.group_ids(meta_br_ids_groups) # list of sets where each set uniquely contains the ids of a single BR as it is represented in META-CSV
+        cits_entities = self.helper.group_ids(cits_br_ids_groups) # list of sets where each set uniquely contains the ids of a single BR as it is represented in CITS-CSV
+
+        if meta_ids_missing_citations:
+            for br_ids_set in meta_entities: # Write an error instance FOR EACH BR, not for each ID
+                table = dict()
+                # Check if all of the IDs associated with the current BR are in meta_ids_missing_citations (using .issubset), 
+                # i.e., if none of the IDs for this BR is involved in a citation. If you want to write an error even when just one
+                # of the IDs is not involved in a citation, chech if br_ids_set.intersection(meta_ids_missing_citations) instead.
+                if br_ids_set.issubset(meta_ids_missing_citations):
+                    # for i in br_ids_set.intersection(meta_ids_missing_citations):
+                    for i in br_ids_set:
+                        for d in ids_positions_meta[i]:
+                            table.update(d)
+                    meta_json_report.append(
+                        self.helper.create_error_dict(
+                            validation_level='csv_wellformedness',
+                            error_type='error',
+                            message=self.messages['m24'], 
+                            error_label='missing_citations',
+                            located_in='row',
+                            table=table
+                        )
+                    )
+
+        if cits_ids_missing_metadata:
+            for br_ids_set in cits_entities: # Write an error instance FOR EACH BR, not for each ID
+                table = dict()
+                # Check if all of the IDs associated with the current BR are in cits_ids_missing_metadata (using .issubset), 
+                # i.e., if none of the IDs for this BR has available metadata. If you want to write an error even when just one
+                # of the IDs has no metadata, chech if br_ids_set.intersection(cits_ids_missing_metadata) instead.
+                if br_ids_set.issubset(cits_ids_missing_metadata):
+                    # for i in br_ids_set.intersection(cits_ids_missing_metadata):
+                    for i in br_ids_set:
+                        for d in ids_positions_cits[i]:
+                            table.update(d)
+                    cits_json_report.append(
+                        self.helper.create_error_dict(
+                            validation_level='csv_wellformedness',
+                            error_type='error',
+                            message=self.messages['m25'],
+                            error_label='missing_citations',
+                            located_in='row',
+                            table=table
+                        )
+                    )
+        
+        meta_txt_report = self.helper.create_validation_summary(meta_json_report)
+        cits_txt_report = self.helper.create_validation_summary(cits_json_report)
+
+        return (meta_json_report, meta_txt_report, cits_json_report, cits_txt_report)
+        
+
+    def validate(self):
+
+        # TODO: add informative print messages to say which process is running and when it terminates
+        
+        # Run single validation for META-CSV and CITS-CSV
+        self.meta_validator.validate()
+        self.cits_validator.validate()
+
+        # Run validation for transitive closure
+        closure_check_out = self.check_closure()
+        meta_closure_json = closure_check_out[0]
+        meta_closure_txt = closure_check_out[1]
+        cits_closure_json = closure_check_out[2]
+        cits_closure_txt = closure_check_out[3]
+
+        if meta_closure_json:
+            # append result of check_closure to the existing JSON validation report
+            with open(self.meta_validator.output_fp_json, 'r', encoding='utf-8') as f:
+                existing_meta_json:list = load(f)
+                final_meta_json = existing_meta_json + meta_closure_json
+            with open(self.meta_validator.output_fp_json, 'w', encoding='utf-8') as f:
+                dump(final_meta_json, f, indent=4)
+
+            # append result of check_closure to the existing TXT validation report
+            with open(self.meta_validator.output_fp_txt, "a", encoding='utf-8') as f:
+                f.write(meta_closure_txt)
+        
+        if cits_closure_json:
+            # append to JSON (CITS-CSV)
+            with open(self.cits_validator.output_fp_json, 'r', encoding='utf-8') as f:
+                existing_cits_json:list = load(f)
+                final_cits_json = existing_cits_json + cits_closure_json
+            with open(self.cits_validator.output_fp_json, 'w', encoding='utf-8') as f:
+                dump(final_cits_json, f, indent=4)
+            # append to TXT (CITS-CSV)
+            with open(self.cits_validator.output_fp_txt, "a", encoding='utf-8') as f:
+                f.write(cits_closure_txt)
+
+        return (final_meta_json, final_cits_json)
 
 
 if __name__ == '__main__':
