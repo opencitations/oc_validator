@@ -13,7 +13,7 @@ from os.path import join, dirname, abspath
 def make_html_row(row_idx, row):
     """
     Converts a single row from the CSV table into an HTML table row with custom appropriate structure.
-    :param row_idx (int): the original index of the row to process, as it appears on the original table. Indexing is 0-based.
+    :param row_idx (int): the original index of the row to process, as it appears on the original table. Indexing is 1-based.
     :param row (dict): the dictionary representing the row
     :return (str): the HTML table row
     """
@@ -101,7 +101,7 @@ def make_html_table(csv_path, rows_to_select: set, all_rows=False):
     """
     Converts the CSV table into an HTML table.
     :param csv_path: the file path to the CSV table data.
-    :param rows_to_select (set): Set containing the indexes (integers) of the rows to be represented in the output HTML table. Row indexing is 0-based.
+    :param rows_to_select (set): Set containing the indexes (integers) of the rows to be represented in the output HTML table. Row indexing is 1-based.
     :param all_rows: True if all the rows in the CSV table should be included in the output HTML table regardless of rows_to_select parameter, False otherwise. Defaults to False.
     :return (str): HTML string of the table (without validation information).
     """
