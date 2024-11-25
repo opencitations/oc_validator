@@ -733,11 +733,12 @@ class Validator:
 
 class ClosureValidator:
 
-    def __init__(self, meta_csv_doc, meta_output_dir, cits_csv_doc, cits_output_dir, meta_kwargs=None, cits_kwargs=None) -> None:
+    def __init__(self, meta_csv_doc, meta_output_dir, cits_csv_doc, cits_output_dir, strict_sequenciality=False, meta_kwargs=None, cits_kwargs=None) -> None:
         self.meta_csv_doc = meta_csv_doc
         self.meta_output_dir = meta_output_dir
         self.cits_csv_doc = cits_csv_doc
         self.cits_output_dir = cits_output_dir
+        self.strict_sequentiality = strict_sequenciality  # if True, runs the check on transitive closure if and only if the other checks passed without errors
 
         script_dir = dirname(abspath(__file__))  # Directory where the script is located
         self.messages = full_load(open(join(script_dir, 'messages.yaml'), 'r', encoding='utf-8'))
@@ -865,9 +866,15 @@ class ClosureValidator:
         # TODO: add informative print messages to say which process is running and when it terminates
         
         # Run single validation for META-CSV and CITS-CSV
-        self.meta_validator.validate()
-        self.cits_validator.validate()
+        meta_out = self.meta_validator.validate()
+        cits_out = self.cits_validator.validate()
 
+        # in case some errors have already been found and strict_sequentiality is True, don't run the check on closure
+        if self.strict_sequentiality and (meta_out or cits_out):
+            print('The validation of the single META-CSV and CITS-CSV tables already detected some error (in one or both documents).',
+                  'Skipping the check of transitive closure as strict_sequentiality==True.')
+            return None 
+        
         # Run validation for transitive closure
         closure_check_out = self.check_closure()
         meta_closure_json = closure_check_out[0]
