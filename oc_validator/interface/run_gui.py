@@ -1,4 +1,4 @@
-from oc_validator.interface.gui import create_and_show_gui
+from oc_validator.interface.gui import make_gui
 from argparse import ArgumentParser
 
 
@@ -15,4 +15,4 @@ if __name__ == '__main__':
     report_path = args.report_fp
     output_html_path = args.out_fp
 
-    create_and_show_gui(csv_path, report_path, output_html_path)
+    make_gui(csv_path, report_path, output_html_path)

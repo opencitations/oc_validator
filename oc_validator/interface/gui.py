@@ -5,9 +5,9 @@ from random import randint
 from jinja2 import Environment, FileSystemLoader
 from json import load
 from os.path import realpath
-import webbrowser
 from os.path import join, dirname, abspath
 # from prettierfier import prettify_html
+# import webbrowser
 
 
 def make_html_row(row_idx, row):
@@ -180,7 +180,7 @@ def add_err_info(htmldoc:str, json_filepath):
         result = str(data)
         return result
 
-def create_and_show_gui(csv_path, report_path, output_html_path):
+def make_gui(csv_path, report_path, output_html_path):
 
     # Prepare the Jinja2 environment
     # env = Environment(loader=FileSystemLoader('.'))
@@ -197,7 +197,7 @@ def create_and_show_gui(csv_path, report_path, output_html_path):
             file.write(html_output)
         html_doc_fp = file.name
         print(f"HTML document generated successfully at {realpath(html_doc_fp)}.")
-        webbrowser.open('file://' + realpath(html_doc_fp))
+        # webbrowser.open('file://' + realpath(html_doc_fp))  # automatically opens created html page on default browser
         return None
 
     error_count = len(report)
@@ -236,10 +236,8 @@ def create_and_show_gui(csv_path, report_path, output_html_path):
         file.write(html_output)
         html_doc_fp = file.name
 
+    # webbrowser.open('file://' + realpath(html_doc_fp))  # Open the HTML file in the default web browser
     print(f"HTML document generated successfully at {realpath(html_doc_fp)}.")
-
-    # Open the HTML file in the default web browser
-    webbrowser.open('file://' + realpath(html_doc_fp))
 
 
 def transpose_report(error_report:dict):
@@ -261,3 +259,23 @@ def transpose_report(error_report:dict):
 
     return res
 
+
+def merge_html_files(doc1_fp, doc2_fp, merged_out_fp):
+    """
+    Merges two HTML documents into a single document.
+    """
+    with open(doc1_fp, 'r', encoding='utf-8') as fhandle1, open(doc2_fp, 'r', encoding='utf-8') as fhandle2:
+        soup1 = BeautifulSoup(fhandle1, 'html.parser')
+        soup2 = BeautifulSoup(fhandle2, 'html.parser')
+
+    # general_info_1 = soup1.find('div', class_='general-info')
+    general_info_2 = soup2.find('div', class_='general-info')
+    table_1_container = soup1.find('div', class_='table-container')
+    table_2_container = soup2.find('div', class_='table-container')
+    table_1_container.insert_after(general_info_2)
+    general_info_2.insert_after(table_2_container)
+    
+    html_out = str(soup1)
+    with open(merged_out_fp, "w", encoding='utf-8') as outf:
+        outf.write(html_out)
+    print(f"HTML document generated successfully at {realpath(outf.name)}.")
