@@ -79,6 +79,7 @@ Starting from version 0.3.3, it is possible to validate two tables at a time, on
 - `meta_out_dir`: Directory for metadata validation results.
 - `cits_in`: Path to the input CSV table storing citations.
 - `cits_out_dir`: Directory for citation validation results.
+- `strict_sequenciality`: \[deafaults to False\] If True, checks the transitive closure if and only if all the other checks passed without detecting errors. With the default option (False), it is always checked that all the entities involved in citations have also their metadata represented in the other table, and vice versa, *regardless* of the presence of other errors in the tables.
 - `meta_kwargs`: (Optional) Dictionary of configuration options for the metadata table validator.
 - `cits_kwargs`: (Optional) Dictionary of configuration options for the citation table validator.
 
