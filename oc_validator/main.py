@@ -924,9 +924,9 @@ if __name__ == '__main__':
     v.validate()
 
 # to instantiate the class, write:
-# v = Validator('path/to/csv/file', 'output/dir/path') # optionally set use_meta_endpoint to True
+# v = Validator('path/to/csv/file', 'output/dir/path') # optionally set use_meta_endpoint to True and/or verify_id_existence to False
 # v.validate() --> validates, returns the output, and saves files
 
 
 # FROM THE COMMAND LINE:
-# python -m oc_validator.main -i <input csv file path> -o <output dir path> [-m]
+# python -m oc_validator.main -i <input csv file path> -o <output dir path> [-m] [-s]

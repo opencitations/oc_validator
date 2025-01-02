@@ -181,6 +181,12 @@ def add_err_info(htmldoc:str, json_filepath):
         return result
 
 def make_gui(csv_path, report_path, output_html_path):
+    """
+    Generates an HTML document that visually represents the errors in the CSV table.
+    :param csv_path: the file path to the CSV table data.
+    :param report_path: the file path to the JSON validation report.
+    :param output_html_path: the file path to the output HTML document.
+    """
 
     # Prepare the Jinja2 environment
     # env = Environment(loader=FileSystemLoader('.'))
@@ -262,7 +268,10 @@ def transpose_report(error_report:dict):
 
 def merge_html_files(doc1_fp, doc2_fp, merged_out_fp):
     """
-    Merges two HTML documents into a single document.
+    Merges two HTML documents into a single document. 
+    :param doc1_fp: the file path to the first HTML document.
+    :param doc2_fp: the file path to the second HTML document.
+    :param merged_out_fp: the file path to the output merged HTML document.
     """
     with open(doc1_fp, 'r', encoding='utf-8') as fhandle1, open(doc2_fp, 'r', encoding='utf-8') as fhandle2:
         soup1 = BeautifulSoup(fhandle1, 'html.parser')
