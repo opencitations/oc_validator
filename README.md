@@ -72,3 +72,34 @@ v.validate()
 v = Validator('path/to/table.csv', 'output/directory', verify_id_existence=False)
 v.validate()
 ```
+
+Starting from version 0.3.3, it is possible to validate two tables at a time, one storing metadata and the other storing citations, in order to verify, besides all the other checks, that all the citations represented in a document have their metadata represented in the other document, and vice versa. This can be done by using the `ClosureValidator` class. The `ClosureValidator` class internally wraps two instances of `Validator`, one for metadata and one for citations, and requires to explicitly specify the table type for either document. Both the internal `Validator` instances can be separately customized by specifying the optional parameters for each of the two via the `meta_kwargs` and `cits_kwargs` arguments. `ClosureValidator` takes the following parameters:
+
+- `meta_in`: Path to the input CSV table storing metadata.
+- `meta_out_dir`: Directory for metadata validation results.
+- `cits_in`: Path to the input CSV table storing citations.
+- `cits_out_dir`: Directory for citation validation results.
+- `strict_sequenciality`: \[deafaults to False\] If True, checks the transitive closure if and only if all the other checks passed without detecting errors. With the default option (False), it is always checked that all the entities involved in citations have also their metadata represented in the other table, and vice versa, *regardless* of the presence of other errors in the tables.
+- `meta_kwargs`: (Optional) Dictionary of configuration options for the metadata table validator.
+- `cits_kwargs`: (Optional) Dictionary of configuration options for the citation table validator.
+
+A usage example of how to validate metadata and citations with `ClosureValidator` is provided as follows:
+
+```python
+from oc_validator.main import ClosureValidator
+
+cv = ClosureValidator(
+    meta_in='path/to/meta.csv', 
+    meta_out_dir='path/to/meta_results',
+    cits_in='path/to/cits.csv', 
+    cits_out_dir='path/to/cits_results',
+    meta_kwargs={'verify_id_existence': False},  # Skip ID existence checks for metadata
+    cits_kwargs={'use_meta_endpoint': True}  # Use OC Meta before external APIs to verify the existence of PIDs
+)
+
+cv.validate() # validates the tables and saves output files in the specified (separate) directories
+```
+
+## Output visualisation
+
+`oc_validator` has an integrated tool for the interactive visualisation of the validation results, which helps users to locate the detected errors in the document in a more intuitive way, and facilitates human understanding of the underlying problems generating them. The documentation of the visualisation tool can be found in [oc_validator/interface/README.md](oc_validator/interface/README.md).
