@@ -870,10 +870,10 @@ class ClosureValidator:
         cits_out = self.cits_validator.validate()
 
         # in case some errors have already been found and strict_sequentiality is True, don't run the check on closure
-        if self.strict_sequentiality and (meta_out or cits_out):
+        if self.strict_sequentiality:
             print('The validation of the single META-CSV and CITS-CSV tables already detected some error (in one or both documents).',
                   'Skipping the check of transitive closure as strict_sequentiality==True.')
-            return None 
+            return (meta_out, cits_out) 
         
         # Run validation for transitive closure
         closure_check_out = self.check_closure()
@@ -882,28 +882,28 @@ class ClosureValidator:
         cits_closure_json = closure_check_out[2]
         cits_closure_txt = closure_check_out[3]
 
-        if meta_closure_json:
-            # append result of check_closure to the existing JSON validation report
-            with open(self.meta_validator.output_fp_json, 'r', encoding='utf-8') as f:
-                existing_meta_json:list = load(f)
-                final_meta_json = existing_meta_json + meta_closure_json
-            with open(self.meta_validator.output_fp_json, 'w', encoding='utf-8') as f:
-                dump(final_meta_json, f, indent=4)
+        # META-CSV
+        # append result of check_closure to the existing JSON validation report
+        with open(self.meta_validator.output_fp_json, 'r', encoding='utf-8') as f:
+            existing_meta_json:list = load(f)
+            final_meta_json = existing_meta_json + meta_closure_json
+        with open(self.meta_validator.output_fp_json, 'w', encoding='utf-8') as f:
+            dump(final_meta_json, f, indent=4)
 
-            # append result of check_closure to the existing TXT validation report
-            with open(self.meta_validator.output_fp_txt, "a", encoding='utf-8') as f:
-                f.write(meta_closure_txt)
-        
-        if cits_closure_json:
-            # append to JSON (CITS-CSV)
-            with open(self.cits_validator.output_fp_json, 'r', encoding='utf-8') as f:
-                existing_cits_json:list = load(f)
-                final_cits_json = existing_cits_json + cits_closure_json
-            with open(self.cits_validator.output_fp_json, 'w', encoding='utf-8') as f:
-                dump(final_cits_json, f, indent=4)
-            # append to TXT (CITS-CSV)
-            with open(self.cits_validator.output_fp_txt, "a", encoding='utf-8') as f:
-                f.write(cits_closure_txt)
+        # append result of check_closure to the existing TXT validation report
+        with open(self.meta_validator.output_fp_txt, "a", encoding='utf-8') as f:
+            f.write(meta_closure_txt)
+
+        # CITS-CSV
+        # append to JSON (CITS-CSV)
+        with open(self.cits_validator.output_fp_json, 'r', encoding='utf-8') as f:
+            existing_cits_json:list = load(f)
+            final_cits_json = existing_cits_json + cits_closure_json
+        with open(self.cits_validator.output_fp_json, 'w', encoding='utf-8') as f:
+            dump(final_cits_json, f, indent=4)
+        # append to TXT (CITS-CSV)
+        with open(self.cits_validator.output_fp_txt, "a", encoding='utf-8') as f:
+            f.write(cits_closure_txt)
 
         return (final_meta_json, final_cits_json)
 
