@@ -22,7 +22,8 @@ from os.path import join, dirname, abspath
 class Wellformedness:
     def __init__(self):
         self.helper = Helper()
-        self.br_id_schemes = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex']
+        self.br_id_schemes = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex', 'temp', 'local']
+        self.br_id_schemes_for_venues = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex']
         self.ra_id_schemes = ['crossref', 'orcid', 'viaf', 'wikidata', 'ror']
         self.id_type_dict = load(open(join(dirname(abspath(__file__)), 'id_type_alignment.json'), 'r', encoding='utf-8'))
 
@@ -110,7 +111,7 @@ class Wellformedness:
         """
         outside_brackets_venue = r'(?:[^\s\[\]]+(?:\s[^\s\[\]]+)*)'
         # pmcids are not valid identifiers for 'venues'!
-        inside_brackets_venue = fr'\[({"|".join(self.br_id_schemes)}):\S+(?:\s({"|".join(self.br_id_schemes)}):\S+)*\]'
+        inside_brackets_venue = fr'\[({"|".join(self.br_id_schemes_for_venues)}):\S+(?:\s({"|".join(self.br_id_schemes_for_venues)}):\S+)*\]'
         venue_pattern = fr'^(?:({outside_brackets_venue}\s{inside_brackets_venue})|({outside_brackets_venue}\s?)|({inside_brackets_venue}))$'
 
         if match(venue_pattern, venue_value):
@@ -126,7 +127,7 @@ class Wellformedness:
         :return:
         bool, True if a match is found (the string is likely NOT well-formed), False if NO match is found.
         """
-        if search(fr'({"|".join(self.br_id_schemes)}):', sub(r'\[.*\]', '', venue_value)):
+        if search(fr'({"|".join(self.br_id_schemes_for_venues)}):', sub(r'\[.*\]', '', venue_value)):
             return True
         else:
             return False

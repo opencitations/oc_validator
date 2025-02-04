@@ -53,6 +53,8 @@ class IdExistence:
         :param id: the string of the ID (prefix included)
         :return: bool
         """
+        if id.startswith('temp:') or id.startswith('local:'): # temp: and local: internal IDs are always considered as exisiting
+            return True
         if self.use_meta_endpoint:
             meta_response = self.query_meta_triplestore(id)
             return meta_response if meta_response is True else self.query_external_service(id)

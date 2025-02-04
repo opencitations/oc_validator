@@ -66,6 +66,10 @@ class IdSyntax:
             vldt = self.openalex_mngr
         elif oc_prefix == 'crossref:':
             vldt = self.crossref_mngr
+        elif oc_prefix == 'temp:':
+            return True
+        elif oc_prefix == 'local:':
+            return True
         else:
             return False
         return vldt.syntax_ok(id)
