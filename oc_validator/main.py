@@ -35,8 +35,11 @@ class ValidationError(Exception):
 class InvalidTableError(ValidationError):
     """Raised when the submitted table cannot be identified as META-CSV or CITS-CSV, therefore cannot be processed."""
     def __init__(self, input_fp):
-        super().__init__(f'The submitted table in file "{input_fp}" is not processable, since it does not comply with '
-                         f'neither META-CSV nor CITS-CSV basic structure.')
+        super().__init__('The submitted table does not meet the required basic formatting standards. '
+                         'Please ensure that both the metadata and citations tables are valid CSV files following the correct structure: '
+                         'the metadata table must have the following columns: "id", "title", "author", "pub_date", "venue", "volume", "issue", "page", "type", "publisher", "editor"; '
+                         'the citations table must have either 4 columns ("citing_id", "citing_publication_date", "cited_id", "cited_publication_date") or two columns ("citing_id","cited_id")'
+                         'Refer to the documentation at https://github.com/opencitations/crowdsourcing/blob/main/README.md for the expected format and structure before resubmitting your deposit.')
         self.input_fp = input_fp
 
 class TableNotMatchingInstance(ValidationError):
@@ -372,7 +375,7 @@ class Validator:
 
                         else:
                             ids = [m.group() for m in
-                                   finditer(r'((?:doi|issn|isbn|url|wikidata|wikipedia|openalex):\S+)(?=\s|\])', value)]
+                                   finditer(r'((?:doi|issn|isbn|url|wikidata|wikipedia|openalex):\S+)(?=\s|\])', value)] # local: and temp: IDs should not be in venue
 
                             for id in ids:
 
@@ -849,7 +852,7 @@ class ClosureValidator:
                             validation_level='csv_wellformedness',
                             error_type='error',
                             message=self.messages['m25'],
-                            error_label='missing_citations',
+                            error_label='missing_metadata',
                             located_in='row',
                             table=table
                         )
@@ -870,8 +873,8 @@ class ClosureValidator:
         cits_out = self.cits_validator.validate()
 
         # in case some errors have already been found and strict_sequentiality is True, don't run the check on closure
-        if self.strict_sequentiality:
-            print('The validation of the single META-CSV and CITS-CSV tables already detected some error (in one or both documents).',
+        if self.strict_sequentiality and (meta_out or cits_out):
+            print('The separate validation of the metadata (META-CSV) and citations (CITS-CSV) tables already detected some error (in one or both documents).',
                   'Skipping the check of transitive closure as strict_sequentiality==True.')
             return (meta_out, cits_out) 
         
