@@ -852,7 +852,7 @@ class ClosureValidator:
                             validation_level='csv_wellformedness',
                             error_type='error',
                             message=self.messages['m25'],
-                            error_label='missing_citations',
+                            error_label='missing_metadata',
                             located_in='row',
                             table=table
                         )
