@@ -22,9 +22,9 @@ from os.path import join, dirname, abspath
 class Wellformedness:
     def __init__(self):
         self.helper = Helper()
-        self.br_id_schemes = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex', 'temp', 'local']
-        self.br_id_schemes_for_venues = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex']
-        self.ra_id_schemes = ['crossref', 'orcid', 'viaf', 'wikidata', 'ror']
+        self.br_id_schemes = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex', 'temp', 'local', 'omid']
+        self.br_id_schemes_for_venues = ['doi', 'issn', 'isbn', 'pmid', 'pmcid', 'url', 'wikidata', 'wikipedia', 'openalex', 'omid', 'jid']
+        self.ra_id_schemes = ['crossref', 'orcid', 'viaf', 'wikidata', 'ror', 'omid']
         self.id_type_dict = load(open(join(dirname(abspath(__file__)), 'id_type_alignment.json'), 'r', encoding='utf-8'))
 
 
@@ -185,9 +185,11 @@ class Wellformedness:
                 try:
                     converted.append(fromRoman(num_str.upper()))
                 except InvalidRomanNumeralError:
+                    if both_num[0] == both_num[1]:
+                        return True  # ignore cases with identical alphanumeric strings (e.g. "a12-a24")
                     return False
 
-        if converted[0] < converted[1]:
+        if converted[0] <= converted[1]:  # TODO: consider creating another function, warning about cases where start page == end page
             return True
         else:
             return False

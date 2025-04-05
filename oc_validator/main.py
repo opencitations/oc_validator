@@ -293,7 +293,7 @@ class Validator:
 
                             else:
                                 ids = [m.group() for m in
-                                       finditer(r'((?:crossref|orcid|viaf|wikidata|ror):\S+)(?=\s|\])', item)]
+                                       finditer(r'((?:crossref|orcid|viaf|wikidata|ror|omid):\S+)(?=\s|\])', item)]
 
                                 for id in ids:
                                     #  2nd validation level: EXTERNAL SYNTAX OF ID (RESPONSIBLE AGENT)
@@ -375,7 +375,7 @@ class Validator:
 
                         else:
                             ids = [m.group() for m in
-                                   finditer(r'((?:doi|issn|isbn|url|wikidata|wikipedia|openalex):\S+)(?=\s|\])', value)] # local: and temp: IDs should not be in venue
+                                   finditer(r'((?:doi|issn|isbn|url|wikidata|wikipedia|openalex|omid|jid):\S+)(?=\s|\])', value)] # local: and temp: IDs should not be in venue
 
                             for id in ids:
 
@@ -513,7 +513,7 @@ class Validator:
 
                             else:
                                 ids = [m.group() for m in
-                                       finditer(r'((?:crossref|orcid|viaf|wikidata|ror):\S+)(?=\s|\])', value)]
+                                       finditer(r'((?:crossref|orcid|viaf|wikidata|ror|omid):\S+)(?=\s|\])', value)]
 
                                 for id in ids:
 

@@ -13,7 +13,7 @@
 # SOFTWARE.
 
 from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, \
-    openalex, crossref
+    openalex, crossref, jid
 from SPARQLWrapper import SPARQLWrapper, JSON
 import time
 
@@ -39,6 +39,7 @@ class IdExistence:
         self.wikipedia_mngr = wikipedia.WikipediaManager()
         self.openalex_mngr = openalex.OpenAlexManager()
         self.crossref_mngr = crossref.CrossrefManager()
+        self.jid_mngr = jid.JIDManager()
         self.use_meta_endpoint = use_meta_endpoint
         self.sparql = SPARQLWrapper("https://opencitations.net/meta/sparql")
         self.sparql.addCustomHttpHeader('Authorization', '4c793897-7787-43ff-b7fa-00aaf7ddf7ed')
@@ -55,6 +56,8 @@ class IdExistence:
         """
         if id.startswith('temp:') or id.startswith('local:'): # temp: and local: internal IDs are always considered as exisiting
             return True
+        if id.startswith('omid:'):  # OMID needs to be checked with a specific query on the triplestore
+            return self.query_omid_in_meta(id)
         if self.use_meta_endpoint:
             meta_response = self.query_meta_triplestore(id)
             return meta_response if meta_response is True else self.query_external_service(id)
@@ -95,6 +98,8 @@ class IdExistence:
             vldt = self.openalex_mngr
         elif oc_prefix == 'crossref:':
             vldt = self.crossref_mngr
+        elif oc_prefix == 'jid:':
+            vldt = self.jid_mngr
         else:
             return False
         return vldt.exists(id.replace(oc_prefix, '', 1))
@@ -126,6 +131,39 @@ class IdExistence:
                 sparql.setReturnFormat(JSON)
                 result: dict = sparql.query().convert()
                 return result.get('boolean')
+            
+            except Exception as e:
+                print(f"Attempt {attempt + 1} failed with error: {e}")
+                if attempt < retries - 1:
+                    time.sleep(delay)  # wait before retrying
+                else:
+                    print("Max retries reached. Query failed.")
+                    return False
+    
+    def query_omid_in_meta(self, id:str, retries:int=3, delay:float=2.0):
+        """
+        Queries exclusively OMIDs in OC Meta, checking if they are registered in the live triplestore.
+        :param id: the string of the ID (prefix included)
+        :return: bool
+        """
+        lookup_id = id.replace('omid:', '', 1)
+
+        sparql = self.sparql
+
+        q = '''
+        ASK WHERE {
+            { <https://w3id.org/oc/meta/%s> ?p ?o } 
+        UNION 
+            { ?s ?p <https://w3id.org/oc/meta/%s> }
+        }
+        ''' % (lookup_id, lookup_id)
+
+        for attempt in range(retries):
+            try:
+                sparql.setQuery(q)
+                sparql.setReturnFormat(JSON)
+                result: dict = sparql.query().convert()
+                return result.get('boolean', False)
             
             except Exception as e:
                 print(f"Attempt {attempt + 1} failed with error: {e}")
