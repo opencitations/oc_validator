@@ -185,9 +185,11 @@ class Wellformedness:
                 try:
                     converted.append(fromRoman(num_str.upper()))
                 except InvalidRomanNumeralError:
+                    if both_num[0] == both_num[1]:
+                        return True  # ignore cases with identical alphanumeric strings (e.g. "a12-a24")
                     return False
 
-        if converted[0] < converted[1]:
+        if converted[0] <= converted[1]:  # TODO: consider creating another function, warning about cases where start page == end page
             return True
         else:
             return False
