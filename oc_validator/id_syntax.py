@@ -12,7 +12,8 @@
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 # SOFTWARE.
 
-from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, openalex, crossref
+from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, openalex, crossref, jid
+from re import match
 
 class IdSyntax:
 
@@ -30,6 +31,7 @@ class IdSyntax:
         self.wikipedia_mngr = wikipedia.WikipediaManager()
         self.openalex_mngr = openalex.OpenAlexManager()
         self.crossref_mngr = crossref.CrossrefManager()
+        self.jid_mngr = jid.JIDManager()
 
     def check_id_syntax(self, id: str):
         """
@@ -40,6 +42,8 @@ class IdSyntax:
         """
         oc_prefix = id[:(id.index(':') + 1)]
 
+        if oc_prefix == 'omid:':
+            return bool(match(r'^(?:br|ra)\/06[1-9]*0[1-9][0-9]*$', id.strip(oc_prefix))) # only supports br and ra entities
         if oc_prefix == 'doi:':
             vldt = self.doi_mngr
         elif oc_prefix == 'isbn:':
@@ -66,6 +70,8 @@ class IdSyntax:
             vldt = self.openalex_mngr
         elif oc_prefix == 'crossref:':
             vldt = self.crossref_mngr
+        elif oc_prefix == 'jid:':
+            vldt = self.jid_mngr
         elif oc_prefix == 'temp:':
             return True
         elif oc_prefix == 'local:':
