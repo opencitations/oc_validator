@@ -12,7 +12,7 @@
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 # SOFTWARE.
 
-from csv import DictReader
+from csv import DictReader, field_size_limit
 from yaml import full_load
 from json import load, dump
 from os.path import exists, join, dirname, abspath
@@ -79,6 +79,7 @@ class Validator:
         self.verify_id_existence = verify_id_existence
 
     def read_csv(self, csv_doc, del_position=0):
+        field_size_limit(100000000)  # sets 100 MB as size limit for parsing larger csv fields
         delimiters_to_try=[',',';','\t']
         with open(csv_doc, 'r', encoding='utf-8') as f:
             data_dict = list(DictReader(f, delimiter=delimiters_to_try[del_position]))
