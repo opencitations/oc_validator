@@ -52,6 +52,16 @@ class TestValidator(unittest.TestCase):
         self.assertTrue(exists(vldtr_valid.output_fp_txt))
         self.assertEqual(errors, [])
 
+        # other valid table
+        outdir2 = join(self.test_output_dir, 'valid_meta_single_2')
+        valid_meta_csv_2 = 'test_data/other_valid_meta_mock.csv'
+        vldtr_valid_2 = Validator(valid_meta_csv_2, outdir1)
+        errors_2 = vldtr_valid_2.validate()
+        self.assertIsInstance(errors, list)
+        self.assertTrue(exists(vldtr_valid_2.output_fp_json))
+        self.assertTrue(exists(vldtr_valid_2.output_fp_txt))
+        self.assertEqual(errors, [])
+
         # invalid table
         outdir2 = join(self.test_output_dir, 'invalid_meta_single')
         invalid_meta_csv = 'test_data/invalid_meta_mock.csv'
