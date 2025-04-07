@@ -8,7 +8,8 @@
         "openalex",
         "temp",
         "local",
-        "omid"
+        "omid",
+        "jid"
     ],
     "journal article": [
         "doi",
