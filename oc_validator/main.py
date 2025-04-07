@@ -265,6 +265,7 @@ class Validator:
 
                 if field == 'author' or field == 'editor':
                     if value:
+                        resp_agents = set()
                         items = value.split('; ')
 
                         for item_idx, item in enumerate(items):
@@ -293,6 +294,21 @@ class Validator:
                                                                   table=table))
 
                             else:
+                                if item not in resp_agents:
+                                    resp_agents.add(item)
+                                else:  # in-field duplication of the same author/editor
+                                    table = {row_idx: {field: [i for i, v in enumerate(items) if v == item]}}
+                                    message = messages['m26']
+
+                                    error_final_report.append(
+                                        self.helper.create_error_dict(validation_level='csv_wellformedness',
+                                                                      error_type='error',
+                                                                      message=message,
+                                                                      error_label='duplicate_ra',
+                                                                      located_in='item',
+                                                                      table=table)  # valid=False
+                                    )
+
                                 ids = [m.group() for m in
                                        finditer(r'((?:crossref|orcid|viaf|wikidata|ror|omid):\S+)(?=\s|\])', item)]
 
@@ -487,9 +503,10 @@ class Validator:
 
                 if field == 'publisher':
                     if value:
+                        resp_agents = set()
                         items = value.split('; ')
                         for item_idx, item in enumerate(items):
-                            if self.wellformed.orphan_ra_id(value):
+                            if self.wellformed.orphan_ra_id(item):
                                 message = messages['m10']
                                 table = {row_idx: {field: [item_idx]}}
                                 error_final_report.append(
@@ -501,7 +518,7 @@ class Validator:
                                                                   table=table,
                                                                   valid=True))
 
-                            if not self.wellformed.wellformedness_publisher_item(value):
+                            if not self.wellformed.wellformedness_publisher_item(item):
                                 message = messages['m9']
                                 table = {row_idx: {field: [item_idx]}}
                                 error_final_report.append(
@@ -511,10 +528,24 @@ class Validator:
                                                                   error_label='publisher_format',
                                                                   located_in='item',
                                                                   table=table))
-
                             else:
+                                if item not in resp_agents:
+                                    resp_agents.add(item)
+                                else:  # in-field duplication of the same publisher
+                                    table = {row_idx: {field: [i for i, v in enumerate(items) if v == item]}}
+                                    message = messages['m26']
+
+                                    error_final_report.append(
+                                        self.helper.create_error_dict(validation_level='csv_wellformedness',
+                                                                      error_type='error',
+                                                                      message=message,
+                                                                      error_label='duplicate_ra',
+                                                                      located_in='item',
+                                                                      table=table)  # valid=False
+                                    )
+
                                 ids = [m.group() for m in
-                                       finditer(r'((?:crossref|orcid|viaf|wikidata|ror|omid):\S+)(?=\s|\])', value)]
+                                       finditer(r'((?:crossref|orcid|viaf|wikidata|ror|omid):\S+)(?=\s|\])', item)]
 
                                 for id in ids:
 

@@ -25,3 +25,4 @@ m22: "The ID is not registered as a persistent identifier for any bibliographic 
 m23: "According to the OpenCitations Data Model, the type specified for the bibliographic entity is not compatible with the ID(s) associated with it."
 m24: "No citations have been provided in CITS-CSV for this publication, i.e. it does not appear to be involved in a citation as either citing or cited entity."
 m25: "This entity is involved in a citation as either citing or cited entity in CITS-CSV, but no metadata has been provided for it in META-CSV."
+m26: "The same responsible agent (author/editor/publisher) is reported more than once within the same cell. Please remove the extra occurrence(s)."
