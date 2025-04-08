@@ -12,7 +12,7 @@
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 # SOFTWARE.
 
-from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, openalex, crossref, jid
+from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, openalex, crossref, jid, arxiv
 from re import match
 
 class IdSyntax:
@@ -32,6 +32,7 @@ class IdSyntax:
         self.openalex_mngr = openalex.OpenAlexManager()
         self.crossref_mngr = crossref.CrossrefManager()
         self.jid_mngr = jid.JIDManager()
+        self.arxiv_mngr = arxiv.ArXivManager()
 
     def check_id_syntax(self, id: str):
         """
@@ -72,6 +73,8 @@ class IdSyntax:
             vldt = self.crossref_mngr
         elif oc_prefix == 'jid:':
             vldt = self.jid_mngr
+        elif oc_prefix == 'arxiv:':
+            vldt = self.arxiv_mngr
         elif oc_prefix == 'temp:':
             return True
         elif oc_prefix == 'local:':
