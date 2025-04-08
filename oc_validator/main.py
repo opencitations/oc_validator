@@ -392,7 +392,7 @@ class Validator:
 
                         else:
                             ids = [m.group() for m in
-                                   finditer(r'((?:doi|issn|isbn|url|wikidata|wikipedia|openalex|omid|jid):\S+)(?=\s|\])', value)] # local: and temp: IDs should not be in venue
+                                   finditer(r'((?:doi|issn|isbn|url|wikidata|wikipedia|openalex|omid|jid|arxiv):\S+)(?=\s|\])', value)] # local: and temp: IDs should not be in venue
 
                             for id in ids:
 

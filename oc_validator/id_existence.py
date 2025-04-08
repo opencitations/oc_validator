@@ -13,7 +13,7 @@
 # SOFTWARE.
 
 from oc_ds_converter.oc_idmanager import doi, isbn, issn, orcid, pmcid, pmid, ror, url, viaf, wikidata, wikipedia, \
-    openalex, crossref, jid
+    openalex, crossref, jid, arxiv
 from SPARQLWrapper import SPARQLWrapper, JSON
 import time
 
@@ -40,6 +40,7 @@ class IdExistence:
         self.openalex_mngr = openalex.OpenAlexManager()
         self.crossref_mngr = crossref.CrossrefManager()
         self.jid_mngr = jid.JIDManager()
+        self.arxiv_mngr = arxiv.ArXivManager()
         self.use_meta_endpoint = use_meta_endpoint
         self.sparql = SPARQLWrapper("https://opencitations.net/meta/sparql")
         self.sparql.addCustomHttpHeader('Authorization', '4c793897-7787-43ff-b7fa-00aaf7ddf7ed')
@@ -100,6 +101,8 @@ class IdExistence:
             vldt = self.crossref_mngr
         elif oc_prefix == 'jid:':
             vldt = self.jid_mngr
+        elif oc_prefix == 'arxiv:':
+            vldt = self.arxiv_mngr
         else:
             return False
         return vldt.exists(id.replace(oc_prefix, '', 1))
