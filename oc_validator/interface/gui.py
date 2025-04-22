@@ -30,7 +30,7 @@ def make_html_row(row_idx, row):
                 items = value.split()
                 for idx, item in enumerate(items):
                     s = f'<span class="item"><span class="item-component">{item}</span></span>'
-                    new_value = new_value.replace(item, s)
+                    new_value = new_value.replace(item, s) if s not in new_value else new_value # to handle in-field duplicates
                 new_value = f'<span class="field-value {col_name}">{new_value}</span>'
 
             elif col_name in ['author', 'editor', 'publisher']:
@@ -52,7 +52,7 @@ def make_html_row(row_idx, row):
                         new_value = new_value.replace(item, s)
                     else:
                         s = f'<span class="item"><span class="item-component">{item}</span></span>'
-                        new_value = new_value.replace(item, s)
+                        new_value = new_value.replace(item, s) if s not in new_value else new_value # to handle in-field duplicates
 
                 new_value = f'<span class="field-value {col_name}">{new_value}</span>'
                 
