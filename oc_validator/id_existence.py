@@ -121,12 +121,15 @@ class IdExistence:
         q = '''
         PREFIX datacite: <http://purl.org/spar/datacite/>
         PREFIX literal: <http://www.essepuntato.it/2010/06/literalreification/>
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
         ASK {
-            ?identifier literal:hasLiteralValue "%s".
-            ?res datacite:hasIdentifier ?identifier.
-            ?identifier datacite:usesIdentifierScheme datacite:%s.
+            VALUES ?val { "%s" "%s"^^xsd:string }
+            ?identifier literal:hasLiteralValue ?val .
+            ?res datacite:hasIdentifier ?identifier .
+            ?identifier datacite:usesIdentifierScheme datacite:%s .
         }
-        ''' % (lookup_id, datacite_id_scheme)
+        ''' % (lookup_id, lookup_id, datacite_id_scheme)
 
         for attempt in range(retries):
             try:
