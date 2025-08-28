@@ -308,87 +308,156 @@ class Wellformedness:
 
         return missing
 
-    def get_duplicates_cits(self, entities: list, data_dict: list, messages) -> list:
-        """
-        Creates a list of dictionaries containing the duplication error in the whole document, either within a row
-        (self-citation) or between two or more rows (duplicate citations).
-        :param entities: list containing sets of strings (the IDs), where each set corresponds to a bibliographic entity
-        :param data_dict: the list of the document's rows, read as dictionaries
-        :param messages: the dictionary containing the messages as they're read from the .yaml config file
-        :return: list of dictionaries, each carrying full info about each duplication error within the document.
-        """
-        visited_dicts = []
+    # # THIS FUNCTION IS THE OLD FUNCTION TO GET DUPLICATES, KEPT HERE FOR REFERENCE.
+    # def get_duplicates_cits(self, entities: list, data_dict: list, messages) -> list:
+    #     """
+    #     Creates a list of dictionaries containing the duplication error in the whole document, either within a row
+    #     (self-citation) or between two or more rows (duplicate citations).
+    #     :param entities: list containing sets of strings (the IDs), where each set corresponds to a bibliographic entity
+    #     :param data_dict: the list of the document's rows, read as dictionaries
+    #     :param messages: the dictionary containing the messages as they're read from the .yaml config file
+    #     :return: list of dictionaries, each carrying full info about each duplication error within the document.
+    #     """
+    #     visited_dicts = []
+    #     report = []
+    #     for row_idx, row in enumerate(data_dict):
+    #         citation = {'citing_id': '', 'cited_id': ''}
+
+    #         citing_items = row['citing_id'].split(' ')
+    #         for item in citing_items:
+    #             if citation['citing_id'] == '':
+    #                 for set_idx, set in enumerate(entities):
+    #                     if item in set:  # mapping the single ID to its corresponding set representing the bibl. entity
+    #                         citation['citing_id'] = set_idx
+    #                         break
+
+    #         cited_items = row['cited_id'].split(' ')
+    #         for item in cited_items:
+    #             if citation['cited_id'] == '':
+    #                 for set_idx, set in enumerate(entities):
+    #                     if item in set:  # mapping the single ID to its corresponding set representing the bibl. entity
+    #                         citation['cited_id'] = set_idx
+    #                         break
+
+    #         # If a field contains only invalid items, it is not possible to map it to an entity set: process the row
+    #         # only if both citing and cited are associated to an entity set, i.e. their value in the 'citation'
+    #         # dictionary is not still an empty string (as it had been initialized).
+    #         if citation['citing_id'] != '' and citation['cited_id'] != '':
+
+    #             if citation['citing_id'] == citation['cited_id']:  # SELF-CITATION warning (an entity cites itself)
+    #                 table = {
+    #                     row_idx: {
+    #                         'citing_id': [idx for idx in range(len(citing_items))],
+    #                         'cited_id': [idx for idx in range(len(cited_items))]
+    #                     }
+    #                 }
+    #                 message = messages['m4']
+    #                 report.append(
+    #                     self.helper.create_error_dict(validation_level='csv_wellformedness', error_type='warning',
+    #                                                   message=message, error_label='self-citation', located_in='field',
+    #                                                   table=table, valid=True))
+
+    #             # SAVE CITATIONS BETWEEN ENTITIES IN A LIST.
+    #             # Each citation is represented as a nested dictionary in which the key-values representing the entity-to-entity
+    #             # citation are unique within the list, but the table representing the location of an INSTANCE of an
+    #             # entity-to-entity citation is updated each time a new instance of such citation is found in the csv document.
+
+    #             citation_table = {
+    #                 row_idx: {
+    #                     'citing_id': [idx for idx in range(len(citing_items))],
+    #                     'cited_id': [idx for idx in range(len(cited_items))]
+    #                 }
+    #             }
+
+    #             cit_info = {'citation': citation, 'table': citation_table}
+
+    #             if not visited_dicts:  # just for the first round of the iteration (when visited_dicts is empty)
+    #                 visited_dicts.append(cit_info)
+    #             else:
+    #                 for dict_idx, cit_dict in enumerate(visited_dicts):
+    #                     if citation == cit_dict['citation']:
+    #                         visited_dicts[dict_idx]['table'].update(cit_info['table'])
+    #                         break
+    #                     elif dict_idx == (len(visited_dicts) - 1):
+    #                         visited_dicts.append(cit_info)
+
+    #     for d in visited_dicts:
+    #         if len(d['table']) > 1:  # if there's more than 1 row in table for a citation (duplicate rows error)
+    #             table = d['table']
+    #             message = messages['m5']
+
+    #             report.append(
+    #                 self.helper.create_error_dict(validation_level='csv_wellformedness', error_type='error',
+    #                                               message=message, error_label='duplicate_citation', located_in='row',
+    #                                               table=table))
+    #     return report
+
+    def get_duplicates_cits(self, entities: list, data_dict: list, messages) -> list: 
+        # Build a fast lookup map: ID -> entity index
+        id_to_entity_index = {}
+        for idx, entity_set in enumerate(entities):
+            for id_ in entity_set:
+                id_to_entity_index[id_] = idx
+
+        citation_map = {}  # key: (citing_idx, cited_idx), value: table of row indices
         report = []
+
         for row_idx, row in enumerate(data_dict):
-            citation = {'citing_id': '', 'cited_id': ''}
-
             citing_items = row['citing_id'].split(' ')
-            for item in citing_items:
-                if citation['citing_id'] == '':
-                    for set_idx, set in enumerate(entities):
-                        if item in set:  # mapping the single ID to its corresponding set representing the bibl. entity
-                            citation['citing_id'] = set_idx
-                            break
-
             cited_items = row['cited_id'].split(' ')
-            for item in cited_items:
-                if citation['cited_id'] == '':
-                    for set_idx, set in enumerate(entities):
-                        if item in set:  # mapping the single ID to its corresponding set representing the bibl. entity
-                            citation['cited_id'] = set_idx
-                            break
 
-            # If a field contains only invalid items, it is not possible to map it to an entity set: process the row
-            # only if both citing and cited are associated to an entity set, i.e. their value in the 'citation'
-            # dictionary is not still an empty string (as it had been initialized).
-            if citation['citing_id'] != '' and citation['cited_id'] != '':
+            # Find first mapped citing entity
+            citing_idx = next((id_to_entity_index.get(item) for item in citing_items if item in id_to_entity_index), None)
+            cited_idx = next((id_to_entity_index.get(item) for item in cited_items if item in id_to_entity_index), None)
 
-                if citation['citing_id'] == citation['cited_id']:  # SELF-CITATION warning (an entity cites itself)
-                    table = {
-                        row_idx: {
-                            'citing_id': [idx for idx in range(len(citing_items))],
-                            'cited_id': [idx for idx in range(len(cited_items))]
-                        }
-                    }
-                    message = messages['m4']
-                    report.append(
-                        self.helper.create_error_dict(validation_level='csv_wellformedness', error_type='warning',
-                                                      message=message, error_label='self-citation', located_in='field',
-                                                      table=table, valid=True))
+            if citing_idx is None or cited_idx is None:
+                continue  # skip rows with unmapped entities
 
-                # SAVE CITATIONS BETWEEN ENTITIES IN A LIST.
-                # Each citation is represented as a nested dictionary in which the key-values representing the entity-to-entity
-                # citation are unique within the list, but the table representing the location of an INSTANCE of an
-                # entity-to-entity citation is updated each time a new instance of such citation is found in the csv document.
-
-                citation_table = {
+            # SELF-CITATION
+            if citing_idx == cited_idx:
+                table = {
                     row_idx: {
-                        'citing_id': [idx for idx in range(len(citing_items))],
-                        'cited_id': [idx for idx in range(len(cited_items))]
+                        'citing_id': list(range(len(citing_items))),
+                        'cited_id': list(range(len(cited_items)))
                     }
                 }
-
-                cit_info = {'citation': citation, 'table': citation_table}
-
-                if not visited_dicts:  # just for the first round of the iteration (when visited_dicts is empty)
-                    visited_dicts.append(cit_info)
-                else:
-                    for dict_idx, cit_dict in enumerate(visited_dicts):
-                        if citation == cit_dict['citation']:
-                            visited_dicts[dict_idx]['table'].update(cit_info['table'])
-                            break
-                        elif dict_idx == (len(visited_dicts) - 1):
-                            visited_dicts.append(cit_info)
-
-        for d in visited_dicts:
-            if len(d['table']) > 1:  # if there's more than 1 row in table for a citation (duplicate rows error)
-                table = d['table']
-                message = messages['m5']
-
+                message = messages['m4']
                 report.append(
-                    self.helper.create_error_dict(validation_level='csv_wellformedness', error_type='error',
-                                                  message=message, error_label='duplicate_citation', located_in='row',
-                                                  table=table))
+                    self.helper.create_error_dict(
+                        validation_level='csv_wellformedness',
+                        error_type='warning',
+                        message=message,
+                        error_label='self-citation',
+                        located_in='field',
+                        table=table,
+                        valid=True
+                    )
+                )
+
+            # Track citations
+            key = (citing_idx, cited_idx)
+            if key not in citation_map:
+                citation_map[key] = {}
+            citation_map[key][row_idx] = {
+                'citing_id': list(range(len(citing_items))),
+                'cited_id': list(range(len(cited_items)))
+            }
+
+        # Identify duplicates
+        for citation, table in citation_map.items():
+            if len(table) > 1:
+                message = messages['m5']
+                report.append(
+                    self.helper.create_error_dict(
+                        validation_level='csv_wellformedness',
+                        error_type='error',
+                        message=message,
+                        error_label='duplicate_citation',
+                        located_in='row',
+                        table=table
+                    )
+                )
+
         return report
 
     def get_duplicates_meta(self, entities: list, data_dict: list, messages) -> list:
