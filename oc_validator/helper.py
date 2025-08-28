@@ -11,30 +11,68 @@
 # DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
 # ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 # SOFTWARE.
+
+from collections import defaultdict
+
+
+class UnionFind:
+    def __init__(self):
+        self.parent = dict()
+
+    def find(self, x):
+        if x not in self.parent:
+            self.parent[x] = x
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])  # Path compression
+        return self.parent[x]
+
+    def union(self, x, y):
+        self.parent[self.find(x)] = self.find(y)
+
 class Helper:
     def __init__(self):  # todo: è necessario mettere init?
         self.descr = 'contains helper functions'
 
-    def group_ids(self, id_groups: list):
-        """
-        Divides identifiers in a list of sets, where each set corresponds to a bibliographic entity.
-        Takes in input a list of sets where each set represent the field 'citing_id', 'cited_id' or 'id' of a single row.
-        Two IDs are considered to be associated to the same bibliographic entity if they occur together in a set at
-        least once.
-        :param id_groups: list containing sets of formally valid IDs
-        :return: list of sets grouping the IDs associated to the same bibliographic entity
-        """
-        old_len = len(id_groups) + 1
-        while len(id_groups) < old_len:
-            old_len = len(id_groups)
-            for i in range(len(id_groups)):
-                for j in range(i + 1, len(id_groups)):
-                    if len(id_groups[i] & id_groups[j]):
-                        id_groups[i] = id_groups[i] | id_groups[j]
-                        id_groups[j] = set()
-            id_groups = [id_groups[i] for i in range(len(id_groups)) if id_groups[i] != set()]
+    # # THIS IS THE OLD FUNCTION TO GROUP IDS, KEPT HERE FOR REFERENCE
+    # def group_ids(self, id_groups: list):
+    #     """
+    #     Divides identifiers in a list of sets, where each set corresponds to a bibliographic entity.
+    #     Takes in input a list of sets where each set represent the field 'citing_id', 'cited_id' or 'id' of a single row.
+    #     Two IDs are considered to be associated to the same bibliographic entity if they occur together in a set at
+    #     least once.
+    #     :param id_groups: list containing sets of formally valid IDs
+    #     :return: list of sets grouping the IDs associated to the same bibliographic entity
+    #     """
+    #     old_len = len(id_groups) + 1
+    #     while len(id_groups) < old_len:
+    #         old_len = len(id_groups)
+    #         for i in range(len(id_groups)):
+    #             for j in range(i + 1, len(id_groups)):
+    #                 if len(id_groups[i] & id_groups[j]):
+    #                     id_groups[i] = id_groups[i] | id_groups[j]
+    #                     id_groups[j] = set()
+    #         id_groups = [id_groups[i] for i in range(len(id_groups)) if id_groups[i] != set()]
 
-        return id_groups
+    #     return id_groups
+
+    def group_ids(self, id_groups: list[set]) -> list[set]:
+
+        uf = UnionFind()
+
+        # Union all IDs that appear together in a group
+        for group in id_groups:
+            ids = list(group)
+            for i in range(1, len(ids)):
+                uf.union(ids[0], ids[i])
+
+        # Gather groups
+        components = defaultdict(set)
+        for group in id_groups:
+            for id_ in group:
+                root = uf.find(id_)
+                components[root].add(id_)
+
+        return list(components.values())
 
     def create_error_dict(self, validation_level: str, error_type: str, message: str, error_label: str, located_in: str,
                           table: dict, valid=False):
