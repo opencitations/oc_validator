@@ -222,7 +222,9 @@ class Wellformedness:
         #  of accepted types might change/be extended frequently!
 
         missing = {}
-        if not row['id']:  # ID value is missing
+        ids = row['id'].split(' ')
+        internal_only_id = all(id.startswith('temp:') or id.startswith('local:') for id in ids)
+        if not row['id'] or internal_only_id:  # ID value is missing or only temp/local IDs are specified
 
             if row['type']:  # ID is missing and 'type' is specified
 
