@@ -955,7 +955,12 @@ if __name__ == '__main__':
                         help='Skip checking if IDs are registered somewhere, i.e. do not use Meta endpoint nor external APIs.',
                         required=False)
     args = parser.parse_args()
-    v = Validator(args.input_csv, args.output_dir, args.use_meta_endpoint)
+    v = Validator(
+        args.input_csv, 
+        args.output_dir, 
+        args.use_meta_endpoint,
+        args.verify_id_existence,
+    )
     v.validate()
 
 # to instantiate the class, write:
